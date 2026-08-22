@@ -8,6 +8,7 @@ type Player = {
   is_captain: boolean;
   is_vice_captain: boolean;
 };
+export const revalidate = 0;
 
 export default async function Home() {
     const { data: players, error } = await supabase
