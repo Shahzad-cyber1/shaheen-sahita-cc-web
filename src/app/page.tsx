@@ -161,6 +161,63 @@ export default function Home() {
           </div>
         </div>
       </section>
+            <section className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
+        <div className="mx-auto max-w-6xl text-center">
+          <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
+            THE SQUAD
+          </p>
+          <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
+            First Team
+          </h2>
+          <p className="mt-3 text-sm text-gray-400">16 Players &middot; 8-Over Format</p>
+        </div>
+
+        <div className="mx-auto mt-14 grid max-w-6xl grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+          {[
+            { name: "Ali Asghar Sahito", role: "Batsman", title: "Captain", badge: "C" },
+            { name: "Majid Hussain Sahito", role: "Batsman", title: "Vice Captain", badge: "VC" },
+            { name: "Saddam Hussain Sahito", role: "All-rounder", title: "Golden Wrist" },
+            { name: "Adam Gul Sahito", role: "Batsman", title: "" },
+            { name: "Ahmed Zahid", role: "Batsman", title: "The Explosive Striker" },
+            { name: "Abdul Hafeez Sahito", role: "Bowler", title: "2nd-Over Bowler" },
+            { name: "Ayaz Hussain Sahito", role: "Bowler", title: "The Impact Player" },
+            { name: "Muhammad Saleh Sahito", role: "Batsman", title: "The Shining Youngster" },
+            { name: "Tanweer Ahmed Sahito", role: "All-rounder", title: "Team Manager" },
+            { name: "Aijaz Ahmed Sahito", role: "Batsman", title: "" },
+            { name: "Nisar Ahmed", role: "Bowler", title: "" },
+            { name: "Ghafoor Sahito", role: "Bowler", title: "" },
+            { name: "Muneer Ahmed", role: "Bowler", title: "Classic Batter" },
+            { name: "Haji Khan", role: "Batsman", title: "The Classic Batsman" },
+            { name: "Shahid Hussain Sahito", role: "Bowler", title: "" },
+            { name: "Amjad Hussain Sahito", role: "Batsman", title: "The Power Hitter" },
+          ].map((player) => (
+            <div
+              key={player.name}
+              className="group relative glass-panel rounded-sm p-5 text-center transition-transform hover:-translate-y-1 hover:border-[var(--border-strong)]"
+            >
+              {player.badge && (
+                <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--accent)] text-[10px] font-semibold text-[var(--accent)]">
+                  {player.badge}
+                </span>
+              )}
+              <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-black/40 font-heading text-lg text-gray-500">
+                {player.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+              </div>
+              <h3 className="font-heading text-sm text-white sm:text-base">
+                {player.name}
+              </h3>
+              <p className="mt-1 text-xs tracking-wide text-gray-400">
+                {player.role}
+              </p>
+              {player.title && (
+                <p className="mt-1 text-[11px] tracking-wide text-[var(--accent-light)]">
+                  {player.title}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
