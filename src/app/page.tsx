@@ -280,6 +280,45 @@ export default function Home() {
           </div>
         </div>
       </section>
+            <section className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
+            GET IN TOUCH
+          </p>
+          <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
+            Contact
+          </h2>
+          <p className="mt-4 text-sm text-gray-400">
+            Village Adam Sahito &middot; Al Mahendar Cricket Ground
+          </p>
+
+          <div className="mx-auto mt-10 grid max-w-md gap-4 sm:grid-cols-2">
+            <div className="glass-panel rounded-sm p-5 text-center">
+              <p className="text-xs tracking-wide text-gray-400">TikTok</p>
+              <p className="mt-1 text-sm text-[var(--accent-light)]">Coming soon</p>
+            </div>
+            <div className="glass-panel rounded-sm p-5 text-center">
+              <p className="text-xs tracking-wide text-gray-400">Contact</p>
+              <p className="mt-1 text-sm text-[var(--accent-light)]">Coming soon</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="relative z-10 border-t border-[var(--border-subtle)] px-6 py-12 text-center md:px-12">
+        <p className="font-heading text-sm tracking-widest text-white">
+          SHAHEEN SAHITA <span className="text-gold-gradient">CC</span>
+        </p>
+        <p className="mt-2 text-xs tracking-wide text-gray-500">
+          Beyond Limits. Beyond Expectations.
+        </p>
+        <p className="mt-4 text-[11px] text-gray-600">
+          Village Adam Sahito &middot; Al Mahendar Cricket Ground
+        </p>
+        <p className="mt-6 text-[11px] text-gray-700">
+          &copy; {new Date().getFullYear()} Shaheen Sahita CC. All rights reserved.
+        </p>
+      </footer>
     </main>
   );
 }
