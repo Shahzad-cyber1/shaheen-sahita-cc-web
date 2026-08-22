@@ -179,7 +179,7 @@ export default function Home() {
             { name: "Saddam Hussain Sahito", role: "All-rounder", title: "Golden Wrist" },
             { name: "Adam Gul Sahito", role: "Batsman", title: "" },
             { name: "Ahmed Zahid", role: "Batsman", title: "The Explosive Striker" },
-            { name: "Abdul Hafeez Sahito", role: "Bowler", title: "2nd-Over Bowler" },
+            { name: "Abdul Hafeez Sahito", role: "Bowler", title: "Attack Bowler" },
             { name: "Ayaz Hussain Sahito", role: "Bowler", title: "The Impact Player" },
             { name: "Muhammad Saleh Sahito", role: "Batsman", title: "The Shining Youngster" },
             { name: "Tanweer Ahmed Sahito", role: "All-rounder", title: "Team Manager" },
@@ -216,6 +216,68 @@ export default function Home() {
               )}
             </div>
           ))}
+        </div>
+      </section>
+            <section className="relative z-10 px-6 py-24 md:px-12">
+        <div className="mx-auto max-w-5xl text-center">
+          <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
+            OUR LEGACY
+          </p>
+          <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
+            Championship History
+          </h2>
+        </div>
+
+        <div className="mx-auto mt-14 grid max-w-4xl grid-cols-3 gap-4 sm:grid-cols-6">
+          {[
+            { count: "03", label: "Championships" },
+            { count: "05", label: "Finals" },
+            { count: "03", label: "Semi-Finals" },
+            { count: "03", label: "Quarter-Finals" },
+            { count: "01", label: "Super 8" },
+            { count: "01", label: "Group Stage" },
+          ].map((stat) => (
+            <div key={stat.label} className="text-center">
+              <p className="font-heading text-3xl font-semibold text-gold-gradient sm:text-4xl">
+                {stat.count}
+              </p>
+              <p className="mt-2 text-[10px] uppercase tracking-wide text-gray-400 sm:text-xs">
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mx-auto mt-16 grid max-w-4xl gap-5 sm:grid-cols-3">
+          {[
+            { title: "Bello Champions Cup", year: "2025", result: "Champions" },
+            { title: "Al Mahendar Cricket Tournament", year: "2026", result: "Champions" },
+            { title: "Mehran Cricket Championship", year: "2026", result: "Champions" },
+          ].map((title) => (
+            <div key={title.title} className="glass-panel rounded-sm p-6 text-center">
+              <p className="text-xs tracking-widest text-[var(--accent)]">{title.year}</p>
+              <h3 className="mt-2 font-heading text-base text-white">{title.title}</h3>
+              <p className="mt-2 text-xs tracking-wide text-[var(--accent-light)]">{title.result}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mx-auto mt-20 max-w-2xl">
+          <div className="space-y-8 border-l border-[var(--border-subtle)] pl-6">
+            {[
+              { year: "2024", event: "Founded" },
+              { year: "2025", event: "Bello Champions Cup — Champions" },
+              { year: "2026", event: "Al Mahendar Cricket Tournament — Champions" },
+              { year: "2026", event: "Mehran Cricket Championship — Champions" },
+              { year: "Present", event: "Continuing to compete, develop players, and represent Adam Sahito with pride." },
+            ].map((item, i) => (
+              <div key={i} className="relative">
+                <span className="absolute -left-[31px] top-1 h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
+                <p className="text-xs tracking-widest text-[var(--accent)]">{item.year}</p>
+                <p className="mt-1 text-sm text-gray-300">{item.event}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </main>
