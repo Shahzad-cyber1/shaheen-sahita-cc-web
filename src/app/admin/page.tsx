@@ -42,8 +42,11 @@ export default function AdminPage() {
     <main className="min-h-screen bg-black px-6 py-12 md:px-12">
       <div className="mx-auto max-w-5xl">
         <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-6">
-          <div>
-            <h1 className="font-heading text-2xl text-white">
+                    <div>
+            <a href="/" className="text-xs text-gray-500 hover:text-[var(--accent)] transition-colors">
+              &larr; Back to Website
+            </a>
+            <h1 className="mt-2 font-heading text-2xl text-white">
               Admin Dashboard
             </h1>
             <p className="mt-1 text-xs text-gray-500">

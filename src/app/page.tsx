@@ -376,9 +376,12 @@ export default async function Home() {
         <p className="mt-4 text-[11px] text-gray-600">
           Village Adam Sahito &middot; Al Mahendar Cricket Ground
         </p>
-        <p className="mt-6 text-[11px] text-gray-700">
+               <p className="mt-6 text-[11px] text-gray-700">
           &copy; {new Date().getFullYear()} Shaheen Sahita CC. All rights reserved.
         </p>
+        <a href="/login" className="mt-2 inline-block text-[10px] text-gray-800 hover:text-gray-600 transition-colors">
+          Admin
+        </a>
       </footer>
     </main>
   );
