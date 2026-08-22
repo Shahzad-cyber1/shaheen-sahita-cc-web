@@ -37,6 +37,13 @@ export default async function Home() {
     .limit(6);
 
   const news = newsList ?? [];
+    const { data: galleryList } = await supabase
+    .from("gallery")
+    .select("id, image_url, caption, category")
+    .order("created_at", { ascending: false })
+    .limit(8);
+
+  const gallery = galleryList ?? [];
   return (
     <main className="relative min-h-screen bg-black overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(212,175,55,0.08),transparent_60%)]" />
@@ -52,6 +59,7 @@ export default async function Home() {
             <a href="#first-team" className="hover:text-[var(--accent)] transition-colors">FIRST TEAM</a>
             <a href="#matches" className="hover:text-[var(--accent)] transition-colors">MATCHES</a>
             <a href="#news" className="hover:text-[var(--accent)] transition-colors">NEWS</a>
+            <a href="#gallery" className="hover:text-[var(--accent)] transition-colors">GALLERY</a>
             <a href="#legacy" className="hover:text-[var(--accent)] transition-colors">LEGACY</a>
             <a href="#contact" className="hover:text-[var(--accent)] transition-colors">CONTACT</a>
           </div>
@@ -329,6 +337,38 @@ export default async function Home() {
                   year: "numeric",
                 })}
               </p>
+            </div>
+          ))}
+        </div>
+      </section>
+            <section id="gallery" className="relative z-10 px-6 py-24 md:px-12">
+        <div className="mx-auto max-w-5xl text-center">
+          <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
+            MOMENTS
+          </p>
+          <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
+            Gallery
+          </h2>
+        </div>
+
+        <div className="mx-auto mt-14 grid max-w-5xl grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+          {gallery.length === 0 && (
+            <p className="col-span-full text-center text-sm text-gray-500">
+              Gallery coming soon.
+            </p>
+          )}
+          {gallery.map((item) => (
+            <div key={item.id} className="group relative aspect-square overflow-hidden rounded-sm border border-[var(--border-subtle)]">
+              <img
+                src={item.image_url}
+                alt={item.caption ?? ""}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+              />
+              {item.caption && (
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                  <p className="text-[10px] text-white">{item.caption}</p>
+                </div>
+              )}
             </div>
           ))}
         </div>
