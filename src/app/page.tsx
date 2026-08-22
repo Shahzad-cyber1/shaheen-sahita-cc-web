@@ -45,6 +45,51 @@ export default function Home() {
           <span>8-OVER FORMAT</span>
         </div>
       </section>
+            <section className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
+            OUR STORY
+          </p>
+          <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
+            About Shaheen Sahita CC
+          </h2>
+
+          <p className="mt-6 text-base leading-relaxed text-gray-300 sm:text-lg">
+            Shaheen Sahita CC is a cricket club representing the community of
+            Adam Sahito, founded around June/July 2024. Playing out of Al
+            Mahendar Cricket Ground in Village Adam Sahito, the club has
+            quickly built a reputation for competitive spirit and a
+            championship mentality in local tournament cricket.
+          </p>
+          <p className="mt-4 text-base leading-relaxed text-gray-300 sm:text-lg">
+            Rooted in teamwork and discipline, Shaheen Sahita CC is focused on
+            developing local and young talent while representing Adam Sahito
+            with pride. The club&apos;s ambition extends beyond every match played
+            &mdash; building a lasting legacy and progressing toward bigger
+            levels of cricket.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-16 grid max-w-4xl grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-6">
+          {[
+            "Teamwork",
+            "Hard Work",
+            "Unity",
+            "Sportsmanship",
+            "Never Give Up",
+            "Discipline",
+          ].map((value) => (
+            <div
+              key={value}
+              className="glass-panel rounded-sm px-3 py-6 text-center"
+            >
+              <span className="text-xs font-medium tracking-wide text-[var(--accent-light)] sm:text-sm">
+                {value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
