@@ -10,12 +10,16 @@ type Player = {
 };
 
 export default async function Home() {
-  const { data: players } = await supabase
+    const { data: players, error } = await supabase
     .from("players")
     .select("id, name, role, title, is_captain, is_vice_captain")
     .eq("status", "active")
     .order("is_captain", { ascending: false })
     .order("is_vice_captain", { ascending: false });
+
+  if (error) {
+    console.error("SUPABASE ERROR:", error.message);
+  }
 
   const squad: Player[] = players ?? [];
   return (
