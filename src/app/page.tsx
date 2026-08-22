@@ -90,6 +90,77 @@ export default function Home() {
           ))}
         </div>
       </section>
+            <section className="relative z-10 px-6 py-24 md:px-12">
+        <div className="mx-auto max-w-5xl text-center">
+          <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
+            LEADERSHIP
+          </p>
+          <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
+            Guiding the Club
+          </h2>
+        </div>
+
+        <div className="mx-auto mt-14 grid max-w-5xl gap-6 sm:grid-cols-2">
+          <div className="glass-panel rounded-sm p-8 text-center">
+            <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--accent)] font-heading text-sm text-[var(--accent)]">
+              C
+            </span>
+            <h3 className="font-heading text-xl text-white">
+              Ali Asghar Sahito
+            </h3>
+            <p className="mt-1 text-sm tracking-wide text-[var(--accent-light)]">
+              Captain
+            </p>
+            <p className="mt-1 text-xs tracking-wide text-gray-400">
+              Batsman
+            </p>
+          </div>
+
+          <div className="glass-panel rounded-sm p-8 text-center">
+            <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--accent)] font-heading text-sm text-[var(--accent)]">
+              VC
+            </span>
+            <h3 className="font-heading text-xl text-white">
+              Majid Hussain Sahito
+            </h3>
+            <p className="mt-1 text-sm tracking-wide text-[var(--accent-light)]">
+              Vice Captain
+            </p>
+            <p className="mt-1 text-xs tracking-wide text-gray-400">
+              Batsman
+            </p>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-6 grid max-w-5xl gap-6 sm:grid-cols-3">
+          <div className="glass-panel rounded-sm p-6 text-center">
+            <h3 className="font-heading text-base text-white">
+              Tanweer Ahmed Sahito
+            </h3>
+            <p className="mt-1 text-xs tracking-wide text-gray-400">
+              Team Manager
+            </p>
+          </div>
+
+          <div className="glass-panel rounded-sm p-6 text-center">
+            <h3 className="font-heading text-base text-white">
+              Sain Gul Hassan Sahito
+            </h3>
+            <p className="mt-1 text-xs tracking-wide text-gray-400">
+              Club Coach
+            </p>
+          </div>
+
+          <div className="glass-panel rounded-sm p-6 text-center">
+            <h3 className="font-heading text-base text-white">
+              Sain Abdul Razzaque Sahito
+            </h3>
+            <p className="mt-1 text-xs tracking-wide text-gray-400">
+              Club Coach
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
