@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core palette */
+  --color-black: #0a0a0a;
+  --color-black-soft: #121212;
+  --color-black-elevated: #1a1a1a;
+  --color-gold: #d4af37;
+  --color-gold-light: #f0d878;
+  --color-gold-dark: #a8842a;
+  --color-gold-muted: #8a7233;
+  --color-white: #f5f5f0;
+  --color-gray: #9a9a94;
+  --color-gray-dark: #4a4a45;
+
+  /* Semantic tokens */
+  --background: var(--color-black);
+  --background-elevated: var(--color-black-elevated);
+  --foreground: var(--color-white);
+  --accent: var(--color-gold);
+  --accent-light: var(--color-gold-light);
+  --border-subtle: rgba(212, 175, 55, 0.15);
+  --border-strong: rgba(212, 175, 55, 0.4);
+
+  --font-heading: var(--font-oswald), "Arial Narrow", sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: 0.02em;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Utility: metallic gold text gradient */
+.text-gold-gradient {
+  background: linear-gradient(135deg, var(--color-gold-light), var(--color-gold) 50%, var(--color-gold-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Utility: glass panel */
+.glass-panel {
+  background: rgba(26, 26, 26, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
 }
