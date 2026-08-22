@@ -32,17 +32,22 @@ export default async function Home() {
     <main className="relative min-h-screen bg-black overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(212,175,55,0.08),transparent_60%)]" />
 
-      <nav className="relative z-10 flex items-center justify-between px-6 py-6 md:px-12">
+            <nav className="relative z-10 flex items-center justify-between px-6 py-6 md:px-12">
         <span className="font-heading text-lg tracking-widest text-white">
           SHAHEEN SAHITA <span className="text-gold-gradient">CC</span>
         </span>
-                <div className="hidden gap-8 text-sm tracking-wide text-gray-300 md:flex">
-          <a href="#home" className="hover:text-[var(--accent)] transition-colors">HOME</a>
-          <a href="#club" className="hover:text-[var(--accent)] transition-colors">CLUB</a>
-          <a href="#first-team" className="hover:text-[var(--accent)] transition-colors">FIRST TEAM</a>
-          <a href="#matches" className="hover:text-[var(--accent)] transition-colors">MATCHES</a>
-          <a href="#legacy" className="hover:text-[var(--accent)] transition-colors">LEGACY</a>
-          <a href="#contact" className="hover:text-[var(--accent)] transition-colors">CONTACT</a>
+        <div className="flex items-center gap-6">
+          <div className="hidden gap-8 text-sm tracking-wide text-gray-300 md:flex">
+            <a href="#home" className="hover:text-[var(--accent)] transition-colors">HOME</a>
+            <a href="#club" className="hover:text-[var(--accent)] transition-colors">CLUB</a>
+            <a href="#first-team" className="hover:text-[var(--accent)] transition-colors">FIRST TEAM</a>
+            <a href="#matches" className="hover:text-[var(--accent)] transition-colors">MATCHES</a>
+            <a href="#legacy" className="hover:text-[var(--accent)] transition-colors">LEGACY</a>
+            <a href="#contact" className="hover:text-[var(--accent)] transition-colors">CONTACT</a>
+          </div>
+          
+                     
+                    <a href="/login" className="rounded-sm border border-[var(--accent)] px-4 py-1.5 text-xs font-medium tracking-wide text-[var(--accent)] transition-colors hover:bg-[var(--accent)] hover:text-black">ADMIN</a>
         </div>
       </nav>
 
@@ -376,12 +381,9 @@ export default async function Home() {
         <p className="mt-4 text-[11px] text-gray-600">
           Village Adam Sahito &middot; Al Mahendar Cricket Ground
         </p>
-               <p className="mt-6 text-[11px] text-gray-700">
+                      <p className="mt-6 text-[11px] text-gray-700">
           &copy; {new Date().getFullYear()} Shaheen Sahita CC. All rights reserved.
         </p>
-        <a href="/login" className="mt-2 inline-block text-[10px] text-gray-800 hover:text-gray-600 transition-colors">
-          Admin
-        </a>
       </footer>
     </main>
   );
