@@ -36,17 +36,17 @@ export default async function Home() {
         <span className="font-heading text-lg tracking-widest text-white">
           SHAHEEN SAHITA <span className="text-gold-gradient">CC</span>
         </span>
-        <div className="hidden gap-8 text-sm tracking-wide text-gray-300 md:flex">
-          <a href="#" className="hover:text-[var(--accent)] transition-colors">HOME</a>
-          <a href="#" className="hover:text-[var(--accent)] transition-colors">CLUB</a>
-          <a href="#" className="hover:text-[var(--accent)] transition-colors">FIRST TEAM</a>
-          <a href="#" className="hover:text-[var(--accent)] transition-colors">MATCHES</a>
-          <a href="#" className="hover:text-[var(--accent)] transition-colors">LEGACY</a>
-          <a href="#" className="hover:text-[var(--accent)] transition-colors">CONTACT</a>
+                <div className="hidden gap-8 text-sm tracking-wide text-gray-300 md:flex">
+          <a href="#home" className="hover:text-[var(--accent)] transition-colors">HOME</a>
+          <a href="#club" className="hover:text-[var(--accent)] transition-colors">CLUB</a>
+          <a href="#first-team" className="hover:text-[var(--accent)] transition-colors">FIRST TEAM</a>
+          <a href="#matches" className="hover:text-[var(--accent)] transition-colors">MATCHES</a>
+          <a href="#legacy" className="hover:text-[var(--accent)] transition-colors">LEGACY</a>
+          <a href="#contact" className="hover:text-[var(--accent)] transition-colors">CONTACT</a>
         </div>
       </nav>
 
-      <section className="relative z-10 flex flex-col items-center justify-center px-6 pt-24 pb-32 text-center md:pt-32">
+            <section id="home" className="relative z-10 flex flex-col items-center justify-center px-6 pt-24 pb-32 text-center md:pt-32">
         <p className="mb-4 text-xs tracking-[0.3em] text-[var(--accent)]">
           FOUNDED 2024 &middot; VILLAGE ADAM SAHITO
         </p>
@@ -62,8 +62,8 @@ export default async function Home() {
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <a href="#" className="rounded-sm border border-[var(--accent)] bg-[var(--accent)] px-6 py-3 text-sm font-medium tracking-wide text-black transition-transform hover:scale-105">MEET THE FIRST TEAM</a>
-          <a href="#" className="rounded-sm border border-[var(--border-strong)] px-6 py-3 text-sm font-medium tracking-wide text-white transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]">LIVE MATCH</a>
+                    <a href="#first-team" className="rounded-sm border border-[var(--accent)] bg-[var(--accent)] px-6 py-3 text-sm font-medium tracking-wide text-black transition-transform hover:scale-105">MEET THE FIRST TEAM</a>
+          <a href="#matches" className="rounded-sm border border-[var(--border-strong)] px-6 py-3 text-sm font-medium tracking-wide text-white transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]">LIVE MATCH</a>
         </div>
 
         <div className="mt-16 flex flex-wrap justify-center gap-x-10 gap-y-4 text-xs tracking-widest text-gray-500">
@@ -74,7 +74,7 @@ export default async function Home() {
           <span>8-OVER FORMAT</span>
         </div>
       </section>
-            <section className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
+                 <section id="club" className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
         <div className="mx-auto max-w-4xl text-center">
           <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
             OUR STORY
@@ -190,7 +190,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
-                 <section className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
+                      <section id="first-team" className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
         <div className="mx-auto max-w-6xl text-center">
           <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
             THE SQUAD
@@ -230,7 +230,7 @@ export default async function Home() {
           ))}
         </div>
       </section>
-            <section className="relative z-10 px-6 py-24 md:px-12">
+                 <section id="matches" className="relative z-10 px-6 py-24 md:px-12">
         <div className="mx-auto max-w-4xl text-center">
           <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
             FIXTURES
@@ -279,7 +279,7 @@ export default async function Home() {
           ))}
         </div>
       </section>
-            <section className="relative z-10 px-6 py-24 md:px-12">
+                  <section id="legacy" className="relative z-10 px-6 py-24 md:px-12">
         <div className="mx-auto max-w-5xl text-center">
           <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
             OUR LEGACY
@@ -341,7 +341,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
-            <section className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
+                  <section id="contact" className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
         <div className="mx-auto max-w-2xl text-center">
           <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
             GET IN TOUCH
