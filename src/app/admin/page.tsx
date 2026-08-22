@@ -61,19 +61,19 @@ export default function AdminPage() {
           </button>
         </div>
 
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 md:grid-cols-3">
-          <div className="glass-panel rounded-sm p-6">
+                <div className="mt-10 grid gap-5 sm:grid-cols-2 md:grid-cols-3">
+          <a href="/admin/players" className="glass-panel block rounded-sm p-6 transition-colors hover:border-[var(--border-strong)]">
             <h2 className="font-heading text-sm text-white">Players</h2>
-            <p className="mt-1 text-xs text-gray-500">Manage squad & profiles</p>
-          </div>
-          <div className="glass-panel rounded-sm p-6">
+            <p className="mt-1 text-xs text-gray-500">Manage squad &amp; profiles</p>
+          </a>
+          <a href="/admin/matches" className="glass-panel block rounded-sm p-6 transition-colors hover:border-[var(--border-strong)]">
             <h2 className="font-heading text-sm text-white">Matches</h2>
-            <p className="mt-1 text-xs text-gray-500">Schedule & results</p>
-          </div>
-          <div className="glass-panel rounded-sm p-6">
+            <p className="mt-1 text-xs text-gray-500">Schedule &amp; results</p>
+          </a>
+          <a href="/admin/news" className="glass-panel block rounded-sm p-6 transition-colors hover:border-[var(--border-strong)]">
             <h2 className="font-heading text-sm text-white">News</h2>
             <p className="mt-1 text-xs text-gray-500">Publish updates</p>
-          </div>
+          </a>
         </div>
       </div>
     </main>
