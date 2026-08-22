@@ -51,6 +51,7 @@ export default async function Home() {
             <a href="#club" className="hover:text-[var(--accent)] transition-colors">CLUB</a>
             <a href="#first-team" className="hover:text-[var(--accent)] transition-colors">FIRST TEAM</a>
             <a href="#matches" className="hover:text-[var(--accent)] transition-colors">MATCHES</a>
+            <a href="#news" className="hover:text-[var(--accent)] transition-colors">NEWS</a>
             <a href="#legacy" className="hover:text-[var(--accent)] transition-colors">LEGACY</a>
             <a href="#contact" className="hover:text-[var(--accent)] transition-colors">CONTACT</a>
           </div>
