@@ -1,4 +1,23 @@
-export default function Home() {
+import { supabase } from "@/lib/supabase";
+
+type Player = {
+  id: string;
+  name: string;
+  role: string;
+  title: string | null;
+  is_captain: boolean;
+  is_vice_captain: boolean;
+};
+
+export default async function Home() {
+  const { data: players } = await supabase
+    .from("players")
+    .select("id, name, role, title, is_captain, is_vice_captain")
+    .eq("status", "active")
+    .order("is_captain", { ascending: false })
+    .order("is_vice_captain", { ascending: false });
+
+  const squad: Player[] = players ?? [];
   return (
     <main className="relative min-h-screen bg-black overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(212,175,55,0.08),transparent_60%)]" />
@@ -161,7 +180,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-            <section className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
+                 <section className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
         <div className="mx-auto max-w-6xl text-center">
           <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
             THE SQUAD
@@ -173,31 +192,14 @@ export default function Home() {
         </div>
 
         <div className="mx-auto mt-14 grid max-w-6xl grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
-          {[
-            { name: "Ali Asghar Sahito", role: "Batsman", title: "Captain", badge: "C" },
-            { name: "Majid Hussain Sahito", role: "Batsman", title: "Vice Captain", badge: "VC" },
-            { name: "Saddam Hussain Sahito", role: "All-rounder", title: "Golden Wrist" },
-            { name: "Adam Gul Sahito", role: "Batsman", title: "" },
-            { name: "Ahmed Zahid", role: "Batsman", title: "The Explosive Striker" },
-            { name: "Abdul Hafeez Sahito", role: "Bowler", title: "Attack Bowler" },
-            { name: "Ayaz Hussain Sahito", role: "Bowler", title: "The Impact Player" },
-            { name: "Muhammad Saleh Sahito", role: "Batsman", title: "The Shining Youngster" },
-            { name: "Tanweer Ahmed Sahito", role: "All-rounder", title: "Team Manager" },
-            { name: "Aijaz Ahmed Sahito", role: "Batsman", title: "" },
-            { name: "Nisar Ahmed", role: "Bowler", title: "" },
-            { name: "Ghafoor Sahito", role: "Bowler", title: "" },
-            { name: "Muneer Ahmed", role: "Bowler", title: "Classic Batter" },
-            { name: "Haji Khan", role: "Batsman", title: "The Classic Batsman" },
-            { name: "Shahid Hussain Sahito", role: "Bowler", title: "" },
-            { name: "Amjad Hussain Sahito", role: "Batsman", title: "The Power Hitter" },
-          ].map((player) => (
+          {squad.map((player) => (
             <div
-              key={player.name}
+              key={player.id}
               className="group relative glass-panel rounded-sm p-5 text-center transition-transform hover:-translate-y-1 hover:border-[var(--border-strong)]"
             >
-              {player.badge && (
+              {(player.is_captain || player.is_vice_captain) && (
                 <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--accent)] text-[10px] font-semibold text-[var(--accent)]">
-                  {player.badge}
+                  {player.is_captain ? "C" : "VC"}
                 </span>
               )}
               <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-black/40 font-heading text-lg text-gray-500">
