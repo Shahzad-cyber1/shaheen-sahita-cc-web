@@ -204,7 +204,7 @@ export default async function Home() {
           <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
             First Team
           </h2>
-          <p className="mt-3 text-sm text-gray-400">16 Players &middot; 8-Over Format</p>
+                    <p className="mt-3 text-sm text-gray-400">{squad.length} Players &middot; 8-Over Format</p>
         </div>
 
         <div className="mx-auto mt-14 grid max-w-6xl grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
