@@ -241,9 +241,10 @@ export default async function Home() {
           <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
             FIXTURES
           </p>
-          <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
+                   <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
             Matches
           </h2>
+          <p className="mt-3 text-sm text-gray-400">{matches.length} Fixtures</p>
         </div>
 
         <div className="mx-auto mt-14 max-w-3xl space-y-4">
