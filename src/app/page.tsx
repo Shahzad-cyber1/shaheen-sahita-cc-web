@@ -22,6 +22,12 @@ export default async function Home() {
   }
 
   const squad: Player[] = players ?? [];
+    const { data: matchList } = await supabase
+    .from("matches")
+    .select("id, opponent, match_date, venue, overs, status")
+    .order("match_date", { ascending: true });
+
+  const matches = matchList ?? [];
   return (
     <main className="relative min-h-screen bg-black overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(212,175,55,0.08),transparent_60%)]" />
@@ -220,6 +226,55 @@ export default async function Home() {
                   {player.title}
                 </p>
               )}
+            </div>
+          ))}
+        </div>
+      </section>
+            <section className="relative z-10 px-6 py-24 md:px-12">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
+            FIXTURES
+          </p>
+          <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
+            Matches
+          </h2>
+        </div>
+
+        <div className="mx-auto mt-14 max-w-3xl space-y-4">
+          {matches.length === 0 && (
+            <p className="text-center text-sm text-gray-500">
+              No upcoming matches scheduled.
+            </p>
+          )}
+          {matches.map((match) => (
+            <div
+              key={match.id}
+              className="glass-panel flex flex-col items-center justify-between gap-3 rounded-sm p-5 sm:flex-row"
+            >
+              <div>
+                <p className="font-heading text-base text-white">
+                  vs {match.opponent}
+                </p>
+                <p className="mt-1 text-xs text-gray-400">
+                  {new Date(match.match_date).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                  {match.venue ? ` \u00B7 ${match.venue}` : ""}
+                </p>
+              </div>
+              <span
+                className={`rounded-sm px-3 py-1 text-[10px] font-medium uppercase tracking-wide ${
+                  match.status === "live"
+                    ? "bg-red-500/20 text-red-400"
+                    : match.status === "completed"
+                    ? "bg-gray-700 text-gray-300"
+                    : "border border-[var(--accent)] text-[var(--accent)]"
+                }`}
+              >
+                {match.status}
+              </span>
             </div>
           ))}
         </div>
