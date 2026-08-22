@@ -29,6 +29,14 @@ export default async function Home() {
     .order("match_date", { ascending: true });
 
   const matches = matchList ?? [];
+    const { data: newsList } = await supabase
+    .from("news")
+    .select("id, title, content, category, created_at")
+    .eq("published", true)
+    .order("created_at", { ascending: false })
+    .limit(6);
+
+  const news = newsList ?? [];
   return (
     <main className="relative min-h-screen bg-black overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(212,175,55,0.08),transparent_60%)]" />
@@ -282,6 +290,44 @@ export default async function Home() {
               >
                 {match.status}
               </span>
+            </div>
+          ))}
+        </div>
+      </section>
+            <section id="news" className="relative z-10 border-t border-[var(--border-subtle)] bg-[var(--background-elevated)] px-6 py-24 md:px-12">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="mb-3 text-xs tracking-[0.3em] text-[var(--accent)]">
+            LATEST UPDATES
+          </p>
+          <h2 className="font-heading text-3xl font-semibold text-white sm:text-4xl">
+            News
+          </h2>
+        </div>
+
+        <div className="mx-auto mt-14 max-w-3xl space-y-4">
+          {news.length === 0 && (
+            <p className="text-center text-sm text-gray-500">
+              No news articles yet.
+            </p>
+          )}
+          {news.map((article) => (
+            <div key={article.id} className="glass-panel rounded-sm p-5">
+              <p className="text-xs tracking-widest text-[var(--accent)]">
+                {article.category}
+              </p>
+              <h3 className="mt-2 font-heading text-lg text-white">
+                {article.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-gray-400">
+                {article.content}
+              </p>
+              <p className="mt-3 text-[11px] text-gray-600">
+                {new Date(article.created_at).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </p>
             </div>
           ))}
         </div>
