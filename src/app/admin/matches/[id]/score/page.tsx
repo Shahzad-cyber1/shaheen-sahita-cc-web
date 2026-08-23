@@ -223,6 +223,41 @@ export default function ScorePage() {
 
     setSaving(false);
   }
+  
+  async function handleWicket() {
+    if (innings && innings.total_wickets >= 10) {
+      setMessage("Innings is all out.");
+      return;
+    }
+
+    const availableBatters = players.filter(
+      (p) => p.id !== striker && p.id !== nonStriker
+    );
+
+    if (availableBatters.length === 0) {
+      setMessage("No more batters available.");
+      return;
+    }
+
+    const names = availableBatters.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
+    const choice = window.prompt(
+      `Who is the new batter? Enter a number:\n${names}`
+    );
+
+    if (!choice) return;
+
+    const index = parseInt(choice, 10) - 1;
+    const newBatter = availableBatters[index];
+
+    if (!newBatter) {
+      setMessage("Invalid selection.");
+      return;
+    }
+
+    await recordDelivery({ isWicket: true, wicketType: "bowled", isLegal: true });
+
+    setStriker(newBatter.id);
+  }
 
   if (checkingAuth) {
     return (
@@ -341,11 +376,11 @@ export default function ScorePage() {
         </div>
 
         <button
-          disabled={saving}
-          onClick={() => recordDelivery({ isWicket: true, wicketType: "bowled", isLegal: true })}
+          disabled={saving || innings.total_wickets >= 10}
+          onClick={handleWicket}
           className="mt-3 w-full rounded-sm bg-red-600 py-3 text-sm font-semibold text-white disabled:opacity-50"
         >
-          WICKET
+          {innings.total_wickets >= 10 ? "ALL OUT" : "WICKET"}
         </button>
 
         {message && <p className="mt-3 text-center text-xs text-red-400">{message}</p>}
