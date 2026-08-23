@@ -17,6 +17,7 @@ type MatchDetail = {
   toss_winner: string | null;
   toss_decision: string | null;
   playing_xi: string[] | null;
+  opponent_players: string[] | null;
 };
 
 export default function MatchSetupPage() {
@@ -30,6 +31,7 @@ export default function MatchSetupPage() {
   const [selectedXI, setSelectedXI] = useState<string[]>([]);
   const [tossWinner, setTossWinner] = useState("");
   const [tossDecision, setTossDecision] = useState("Bat");
+  const [opponentPlayersText, setOpponentPlayersText] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -47,7 +49,7 @@ export default function MatchSetupPage() {
   async function loadData() {
     const { data: matchData } = await supabase
       .from("matches")
-      .select("id, opponent, match_date, toss_winner, toss_decision, playing_xi")
+      .select("id, opponent, match_date, toss_winner, toss_decision, playing_xi, opponent_players")
       .eq("id", matchId)
       .single();
 
@@ -56,6 +58,7 @@ export default function MatchSetupPage() {
       setTossWinner(matchData.toss_winner ?? "");
       setTossDecision(matchData.toss_decision ?? "Bat");
       setSelectedXI(matchData.playing_xi ?? []);
+      setOpponentPlayersText((matchData.opponent_players ?? []).join("\n"));
     }
 
     const { data: playerData } = await supabase
@@ -83,12 +86,18 @@ export default function MatchSetupPage() {
     setSaving(true);
     setMessage("");
 
+    const opponentPlayersArray = opponentPlayersText
+      .split("\n")
+      .map((n) => n.trim())
+      .filter((n) => n.length > 0);
+
     const { error } = await supabase
       .from("matches")
       .update({
         toss_winner: tossWinner || null,
         toss_decision: tossDecision,
         playing_xi: selectedXI,
+        opponent_players: opponentPlayersArray,
       })
       .eq("id", matchId);
 
@@ -163,7 +172,7 @@ export default function MatchSetupPage() {
             {players.map((player) => {
               const isSelected = selectedXI.includes(player.id);
               return (
-                <button
+            <button
                   key={player.id}
                   type="button"
                   onClick={() => togglePlayer(player.id)}
@@ -179,6 +188,18 @@ export default function MatchSetupPage() {
               );
             })}
           </div>
+        </div>
+
+        <div className="glass-panel mt-6 rounded-sm p-6">
+          <h2 className="font-heading text-sm text-white">Opponent Players</h2>
+          <p className="mt-1 text-xs text-gray-500">One name per line</p>
+          <textarea
+            value={opponentPlayersText}
+            onChange={(e) => setOpponentPlayersText(e.target.value)}
+            rows={6}
+            className="mt-3 w-full rounded-sm border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-3 py-2 text-sm text-white outline-none focus:border-[var(--accent)]"
+            placeholder={`Player 1\nPlayer 2\nPlayer 3`}
+          />
         </div>
 
         {message && (

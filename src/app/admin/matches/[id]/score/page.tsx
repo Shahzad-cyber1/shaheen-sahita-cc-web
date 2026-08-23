@@ -128,8 +128,9 @@ export default function ScorePage() {
     setMessage("");
 
     const nextBall = options.isLegal ? currentBall + 1 : currentBall;
-    const nextOver = nextBall > 6 ? currentOver + 1 : currentOver;
-    const finalBall = nextBall > 6 ? 1 : nextBall;
+    const isOverComplete = nextBall > 6;
+    const nextOver = isOverComplete ? currentOver + 1 : currentOver;
+    const finalBall = isOverComplete ? 1 : nextBall;
 
     const { error } = await supabase.from("deliveries").insert({
       innings_id: innings.id,
@@ -157,9 +158,9 @@ export default function ScorePage() {
     const newWickets = innings.total_wickets + (options.isWicket ? 1 : 0);
 
     if (options.isLegal) {
-      if (nextBall > 6) {
+      if (isOverComplete) {
         setCurrentOver(nextOver);
-        setCurrentBall(0);
+        setCurrentBall(1);
       } else {
         setCurrentBall(nextBall);
       }
@@ -173,7 +174,7 @@ export default function ScorePage() {
     setRecentBalls((prev) => [...prev.slice(-9), ballLabel]);
 
     const oversDisplay = options.isLegal
-      ? nextBall > 6
+      ? isOverComplete
         ? nextOver
         : currentOver + finalBall / 10
       : currentOver + currentBall / 10;
@@ -202,7 +203,7 @@ export default function ScorePage() {
     }
 
     // Strike rotation at end of over
-    if (options.isLegal && nextBall > 6) {
+    if (options.isLegal && isOverComplete) {
       setStriker((s) => {
         setNonStriker(s === striker ? nonStriker : striker);
         return nonStriker;
