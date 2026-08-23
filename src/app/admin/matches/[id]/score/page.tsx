@@ -50,17 +50,28 @@ export default function ScorePage() {
   async function loadPlayers() {
     const { data: matchData } = await supabase
       .from("matches")
-      .select("playing_xi")
+      .select("playing_xi, opponent_players")
       .eq("id", matchId)
       .single();
+
+    const ownPlayers: Player[] = [];
 
     if (matchData?.playing_xi?.length) {
       const { data } = await supabase
         .from("players")
         .select("id, name")
         .in("id", matchData.playing_xi);
-      setPlayers(data ?? []);
+      if (data) ownPlayers.push(...data);
     }
+
+    const opponentPlayers: Player[] = (matchData?.opponent_players ?? []).map(
+      (name: string, index: number) => ({
+        id: `opp-${index}-${name}`,
+        name: `${name} (Opp)`,
+      })
+    );
+
+    setPlayers([...ownPlayers, ...opponentPlayers]);
   }
 
   const loadInnings = useCallback(async () => {
@@ -128,17 +139,15 @@ export default function ScorePage() {
     setMessage("");
 
     const nextBall = options.isLegal ? currentBall + 1 : currentBall;
-    const isOverComplete = nextBall > 6;
-    const nextOver = isOverComplete ? currentOver + 1 : currentOver;
-    const finalBall = isOverComplete ? 1 : nextBall;
+    const isOverComplete = options.isLegal && nextBall === 6;
 
     const { error } = await supabase.from("deliveries").insert({
       innings_id: innings.id,
-      over_number: options.isLegal ? nextOver : currentOver,
-      ball_number: options.isLegal ? finalBall : currentBall + 1,
-      striker_id: striker,
-      non_striker_id: nonStriker,
-      bowler_id: bowler,
+      over_number: currentOver,
+      ball_number: options.isLegal ? nextBall : currentBall + 1,
+      striker_id: striker.startsWith("opp-") ? null : striker,
+      non_striker_id: nonStriker.startsWith("opp-") ? null : nonStriker,
+      bowler_id: bowler.startsWith("opp-") ? null : bowler,
       runs_off_bat: options.runsOffBat ?? 0,
       extra_type: options.extraType ?? null,
       extra_runs: options.extraRuns ?? 0,
@@ -159,8 +168,8 @@ export default function ScorePage() {
 
     if (options.isLegal) {
       if (isOverComplete) {
-        setCurrentOver(nextOver);
-        setCurrentBall(1);
+        setCurrentOver(currentOver + 1);
+        setCurrentBall(0);
       } else {
         setCurrentBall(nextBall);
       }
@@ -175,8 +184,8 @@ export default function ScorePage() {
 
     const oversDisplay = options.isLegal
       ? isOverComplete
-        ? nextOver
-        : currentOver + finalBall / 10
+        ? currentOver + 1
+        : currentOver + nextBall / 10
       : currentOver + currentBall / 10;
 
     await supabase
@@ -195,20 +204,22 @@ export default function ScorePage() {
       total_overs: oversDisplay,
     });
 
-    // Strike rotation on odd runs
+    let finalStriker = striker;
+    let finalNonStriker = nonStriker;
+
     if ((options.runsOffBat ?? 0) % 2 === 1) {
-      const temp = striker;
-      setStriker(nonStriker);
-      setNonStriker(temp);
+      finalStriker = nonStriker;
+      finalNonStriker = striker;
     }
 
-    // Strike rotation at end of over
     if (options.isLegal && isOverComplete) {
-      setStriker((s) => {
-        setNonStriker(s === striker ? nonStriker : striker);
-        return nonStriker;
-      });
+      const temp = finalStriker;
+      finalStriker = finalNonStriker;
+      finalNonStriker = temp;
     }
+
+    setStriker(finalStriker);
+    setNonStriker(finalNonStriker);
 
     setSaving(false);
   }
@@ -245,7 +256,7 @@ export default function ScorePage() {
   return (
     <main className="min-h-screen bg-black px-4 py-6">
       <div className="mx-auto max-w-md">
-        <a href={`/admin/matches`} className="text-xs text-gray-500">
+        <a href="/admin/matches" className="text-xs text-gray-500">
           &larr; Back
         </a>
 
