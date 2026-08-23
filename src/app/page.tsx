@@ -44,6 +44,25 @@ export default async function Home() {
     .limit(8);
 
   const gallery = galleryList ?? [];
+    const { data: tournamentList } = await supabase
+    .from("tournaments")
+    .select("id, name, year, status, final_result")
+    .order("year", { ascending: false });
+
+  const tournaments = tournamentList ?? [];
+
+  const championships = tournaments.filter((t) => t.final_result === "Champions").length;
+  const finals = tournaments.filter((t) =>
+    ["Champions", "Finalist"].includes(t.final_result ?? "")
+  ).length;
+  const semiFinals = tournaments.filter((t) =>
+    ["Champions", "Finalist", "Semi-Finalist"].includes(t.final_result ?? "")
+  ).length;
+  const quarterFinals = tournaments.filter((t) =>
+    ["Champions", "Finalist", "Semi-Finalist", "Quarter-Finalist"].includes(t.final_result ?? "")
+  ).length;
+  const super8s = tournaments.filter((t) => t.final_result === "Super 8").length;
+  const groupStages = tournaments.filter((t) => t.final_result === "Group Stage").length;
   return (
     <main className="relative min-h-screen bg-black overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(212,175,55,0.08),transparent_60%)]" />
@@ -383,18 +402,18 @@ export default async function Home() {
           </h2>
         </div>
 
-        <div className="mx-auto mt-14 grid max-w-4xl grid-cols-3 gap-4 sm:grid-cols-6">
+                <div className="mx-auto mt-14 grid max-w-4xl grid-cols-3 gap-4 sm:grid-cols-6">
           {[
-            { count: "03", label: "Championships" },
-            { count: "05", label: "Finals" },
-            { count: "03", label: "Semi-Finals" },
-            { count: "03", label: "Quarter-Finals" },
-            { count: "01", label: "Super 8" },
-            { count: "01", label: "Group Stage" },
+            { count: championships, label: "Championships" },
+            { count: finals, label: "Finals" },
+            { count: semiFinals, label: "Semi-Finals" },
+            { count: quarterFinals, label: "Quarter-Finals" },
+            { count: super8s, label: "Super 8" },
+            { count: groupStages, label: "Group Stage" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <p className="font-heading text-3xl font-semibold text-gold-gradient sm:text-4xl">
-                {stat.count}
+                {String(stat.count).padStart(2, "0")}
               </p>
               <p className="mt-2 text-[10px] uppercase tracking-wide text-gray-400 sm:text-xs">
                 {stat.label}
@@ -403,18 +422,16 @@ export default async function Home() {
           ))}
         </div>
 
-        <div className="mx-auto mt-16 grid max-w-4xl gap-5 sm:grid-cols-3">
-          {[
-            { title: "Bello Champions Cup", year: "2025", result: "Champions" },
-            { title: "Al Mahendar Cricket Tournament", year: "2026", result: "Champions" },
-            { title: "Mehran Cricket Championship", year: "2026", result: "Champions" },
-          ].map((title) => (
-            <div key={title.title} className="glass-panel rounded-sm p-6 text-center">
-              <p className="text-xs tracking-widest text-[var(--accent)]">{title.year}</p>
-              <h3 className="mt-2 font-heading text-base text-white">{title.title}</h3>
-              <p className="mt-2 text-xs tracking-wide text-[var(--accent-light)]">{title.result}</p>
-            </div>
-          ))}
+                <div className="mx-auto mt-16 grid max-w-4xl gap-5 sm:grid-cols-3">
+          {tournaments
+            .filter((t) => t.final_result)
+            .map((t) => (
+              <div key={t.id} className="glass-panel rounded-sm p-6 text-center">
+                <p className="text-xs tracking-widest text-[var(--accent)]">{t.year}</p>
+                <h3 className="mt-2 font-heading text-base text-white">{t.name}</h3>
+                <p className="mt-2 text-xs tracking-wide text-[var(--accent-light)]">{t.final_result}</p>
+              </div>
+            ))}
         </div>
 
         <div className="mx-auto mt-20 max-w-2xl">
