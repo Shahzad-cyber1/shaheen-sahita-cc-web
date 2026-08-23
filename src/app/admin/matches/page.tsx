@@ -190,7 +190,9 @@ export default function AdminMatchesPage() {
                       {match.match_date} {match.venue ? `\u00B7 ${match.venue}` : ""} \u00B7 {match.overs} overs
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                                          <a href={`/admin/matches/${match.id}`} className="rounded-sm border border-[var(--border-subtle)] px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]">Setup</a>
+
                     <select
                       value={match.status}
                       onChange={(e) => handleStatusChange(match.id, e.target.value)}
