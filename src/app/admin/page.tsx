@@ -74,9 +74,13 @@ export default function AdminPage() {
             <h2 className="font-heading text-sm text-white">News</h2>
             <p className="mt-1 text-xs text-gray-500">Publish updates</p>
           </a>
-          <a href="/admin/gallery" className="glass-panel block rounded-sm p-6 transition-colors hover:border-[var(--border-strong)]">
+                    <a href="/admin/gallery" className="glass-panel block rounded-sm p-6 transition-colors hover:border-[var(--border-strong)]">
             <h2 className="font-heading text-sm text-white">Gallery</h2>
             <p className="mt-1 text-xs text-gray-500">Upload photos</p>
+          </a>
+          <a href="/admin/tournaments" className="glass-panel block rounded-sm p-6 transition-colors hover:border-[var(--border-strong)]">
+            <h2 className="font-heading text-sm text-white">Tournaments</h2>
+            <p className="mt-1 text-xs text-gray-500">Manage competitions</p>
           </a>
         </div>
       </div>
