@@ -187,13 +187,15 @@ export default function MatchSetupPage() {
           </p>
         )}
 
-        <button
+                <button
           onClick={handleSave}
           disabled={saving}
           className="mt-6 w-full rounded-sm bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-black transition-transform hover:scale-[1.01] disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save Match Setup"}
         </button>
+
+        <a href={`/admin/matches/${matchId}/score`} className="mt-3 block w-full rounded-sm border border-[var(--border-strong)] px-4 py-2.5 text-center text-sm text-white transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]">Go to Live Scorer</a>
       </div>
     </main>
   );

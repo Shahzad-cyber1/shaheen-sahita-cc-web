@@ -1,0 +1,343 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+
+type Player = { id: string; name: string };
+
+type Innings = {
+  id: string;
+  innings_number: number;
+  batting_team: string;
+  total_runs: number;
+  total_wickets: number;
+  total_overs: number;
+  status: string;
+};
+
+export default function ScorePage() {
+  const router = useRouter();
+  const params = useParams();
+  const matchId = params.id as string;
+
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [innings, setInnings] = useState<Innings | null>(null);
+
+  const [striker, setStriker] = useState("");
+  const [nonStriker, setNonStriker] = useState("");
+  const [bowler, setBowler] = useState("");
+
+  const [currentOver, setCurrentOver] = useState(0);
+  const [currentBall, setCurrentBall] = useState(0);
+  const [recentBalls, setRecentBalls] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        router.push("/login");
+      } else {
+        setCheckingAuth(false);
+        loadPlayers();
+        loadInnings();
+      }
+    });
+  }, [router, matchId]);
+
+  async function loadPlayers() {
+    const { data: matchData } = await supabase
+      .from("matches")
+      .select("playing_xi")
+      .eq("id", matchId)
+      .single();
+
+    if (matchData?.playing_xi?.length) {
+      const { data } = await supabase
+        .from("players")
+        .select("id, name")
+        .in("id", matchData.playing_xi);
+      setPlayers(data ?? []);
+    }
+  }
+
+  const loadInnings = useCallback(async () => {
+    const { data } = await supabase
+      .from("innings")
+      .select("id, innings_number, batting_team, total_runs, total_wickets, total_overs, status")
+      .eq("match_id", matchId)
+      .eq("status", "in_progress")
+      .order("innings_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    setInnings(data);
+
+    if (data) {
+      const { data: deliveries } = await supabase
+        .from("deliveries")
+        .select("over_number, ball_number")
+        .eq("innings_id", data.id)
+        .eq("is_legal_delivery", true)
+        .order("over_number", { ascending: false })
+        .order("ball_number", { ascending: false })
+        .limit(1);
+
+      if (deliveries && deliveries.length > 0) {
+        setCurrentOver(deliveries[0].over_number);
+        setCurrentBall(deliveries[0].ball_number);
+      }
+    }
+  }, [matchId]);
+
+  async function handleStartInnings() {
+    const { data, error } = await supabase
+      .from("innings")
+      .insert({
+        match_id: matchId,
+        innings_number: 1,
+        batting_team: "Shaheen Sahita CC",
+      })
+      .select()
+      .single();
+
+    if (error) {
+      setMessage("Error: " + error.message);
+      return;
+    }
+
+    setInnings(data);
+  }
+
+  async function recordDelivery(options: {
+    runsOffBat?: number;
+    extraType?: string;
+    extraRuns?: number;
+    isWicket?: boolean;
+    wicketType?: string;
+    isLegal: boolean;
+  }) {
+    if (!innings || !striker || !nonStriker || !bowler) {
+      setMessage("Select striker, non-striker, and bowler first.");
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+
+    const nextBall = options.isLegal ? currentBall + 1 : currentBall;
+    const nextOver = nextBall > 6 ? currentOver + 1 : currentOver;
+    const finalBall = nextBall > 6 ? 1 : nextBall;
+
+    const { error } = await supabase.from("deliveries").insert({
+      innings_id: innings.id,
+      over_number: options.isLegal ? nextOver : currentOver,
+      ball_number: options.isLegal ? finalBall : currentBall + 1,
+      striker_id: striker,
+      non_striker_id: nonStriker,
+      bowler_id: bowler,
+      runs_off_bat: options.runsOffBat ?? 0,
+      extra_type: options.extraType ?? null,
+      extra_runs: options.extraRuns ?? 0,
+      is_wicket: options.isWicket ?? false,
+      wicket_type: options.wicketType ?? null,
+      is_legal_delivery: options.isLegal,
+    });
+
+    if (error) {
+      setSaving(false);
+      setMessage("Error: " + error.message);
+      return;
+    }
+
+    const totalRuns = (options.runsOffBat ?? 0) + (options.extraRuns ?? 0);
+    const newTotalRuns = innings.total_runs + totalRuns;
+    const newWickets = innings.total_wickets + (options.isWicket ? 1 : 0);
+
+    if (options.isLegal) {
+      if (nextBall > 6) {
+        setCurrentOver(nextOver);
+        setCurrentBall(0);
+      } else {
+        setCurrentBall(nextBall);
+      }
+    }
+
+    const ballLabel = options.isWicket
+      ? "W"
+      : options.extraType
+      ? options.extraType.toUpperCase()[0]
+      : String(options.runsOffBat ?? 0);
+    setRecentBalls((prev) => [...prev.slice(-9), ballLabel]);
+
+    const oversDisplay = options.isLegal
+      ? nextBall > 6
+        ? nextOver
+        : currentOver + finalBall / 10
+      : currentOver + currentBall / 10;
+
+    await supabase
+      .from("innings")
+      .update({
+        total_runs: newTotalRuns,
+        total_wickets: newWickets,
+        total_overs: oversDisplay,
+      })
+      .eq("id", innings.id);
+
+    setInnings({
+      ...innings,
+      total_runs: newTotalRuns,
+      total_wickets: newWickets,
+      total_overs: oversDisplay,
+    });
+
+    // Strike rotation on odd runs
+    if ((options.runsOffBat ?? 0) % 2 === 1) {
+      const temp = striker;
+      setStriker(nonStriker);
+      setNonStriker(temp);
+    }
+
+    // Strike rotation at end of over
+    if (options.isLegal && nextBall > 6) {
+      setStriker((s) => {
+        setNonStriker(s === striker ? nonStriker : striker);
+        return nonStriker;
+      });
+    }
+
+    setSaving(false);
+  }
+
+  if (checkingAuth) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-black">
+        <p className="text-sm text-gray-500">Loading...</p>
+      </main>
+    );
+  }
+
+  if (!innings) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-black px-6">
+        <div className="text-center">
+          <p className="mb-4 text-sm text-gray-400">No innings in progress.</p>
+          <button
+            onClick={handleStartInnings}
+            className="rounded-sm bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-black"
+          >
+            Start Innings
+          </button>
+          {message && <p className="mt-3 text-xs text-red-400">{message}</p>}
+        </div>
+      </main>
+    );
+  }
+
+  const strikerName = players.find((p) => p.id === striker)?.name ?? "Select";
+  const nonStrikerName = players.find((p) => p.id === nonStriker)?.name ?? "Select";
+  const bowlerName = players.find((p) => p.id === bowler)?.name ?? "Select";
+
+  return (
+    <main className="min-h-screen bg-black px-4 py-6">
+      <div className="mx-auto max-w-md">
+        <a href={`/admin/matches`} className="text-xs text-gray-500">
+          &larr; Back
+        </a>
+
+        <div className="glass-panel mt-3 rounded-sm p-4 text-center">
+          <p className="font-heading text-4xl text-white">
+            {innings.total_runs}/{innings.total_wickets}
+          </p>
+          <p className="mt-1 text-sm text-gray-400">
+            Overs: {currentOver}.{currentBall}
+          </p>
+        </div>
+
+        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+          <select value={striker} onChange={(e) => setStriker(e.target.value)} className="rounded-sm border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-2 py-2 text-white">
+            <option value="">Striker</option>
+            {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <select value={nonStriker} onChange={(e) => setNonStriker(e.target.value)} className="rounded-sm border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-2 py-2 text-white">
+            <option value="">Non-Striker</option>
+            {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <select value={bowler} onChange={(e) => setBowler(e.target.value)} className="rounded-sm border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-2 py-2 text-white">
+            <option value="">Bowler</option>
+            {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+
+        <p className="mt-2 text-center text-xs text-gray-500">
+          {strikerName}* &amp; {nonStrikerName} &middot; {bowlerName} bowling
+        </p>
+
+        <div className="mt-3 flex flex-wrap justify-center gap-1">
+          {recentBalls.map((b, i) => (
+            <span key={i} className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--background-elevated)] text-[10px] text-white">
+              {b}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-6 grid grid-cols-3 gap-2">
+          {[0, 1, 2, 3, 4, 6].map((run) => (
+            <button
+              key={run}
+              disabled={saving}
+              onClick={() => recordDelivery({ runsOffBat: run, isLegal: true })}
+              className="rounded-sm bg-[var(--background-elevated)] py-4 text-xl font-semibold text-white active:scale-95 disabled:opacity-50"
+            >
+              {run}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            disabled={saving}
+            onClick={() => recordDelivery({ extraType: "wide", extraRuns: 1, isLegal: false })}
+            className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
+          >
+            WIDE
+          </button>
+          <button
+            disabled={saving}
+            onClick={() => recordDelivery({ extraType: "no-ball", extraRuns: 1, isLegal: false })}
+            className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
+          >
+            NO BALL
+          </button>
+          <button
+            disabled={saving}
+            onClick={() => recordDelivery({ extraType: "bye", extraRuns: 1, isLegal: true })}
+            className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
+          >
+            BYE
+          </button>
+          <button
+            disabled={saving}
+            onClick={() => recordDelivery({ extraType: "leg-bye", extraRuns: 1, isLegal: true })}
+            className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
+          >
+            LEG BYE
+          </button>
+        </div>
+
+        <button
+          disabled={saving}
+          onClick={() => recordDelivery({ isWicket: true, wicketType: "bowled", isLegal: true })}
+          className="mt-3 w-full rounded-sm bg-red-600 py-3 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          WICKET
+        </button>
+
+        {message && <p className="mt-3 text-center text-xs text-red-400">{message}</p>}
+      </div>
+    </main>
+  );
+}
