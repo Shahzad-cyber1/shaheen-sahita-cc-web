@@ -20,11 +20,12 @@ export default function AdminPlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [name, setName] = useState("");
+    const [name, setName] = useState("");
   const [role, setRole] = useState("Batsman");
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -47,7 +48,7 @@ export default function AdminPlayersPage() {
     setLoading(false);
   }
 
-  async function handleAddPlayer(e: React.FormEvent) {
+    async function handleAddPlayer(e: React.FormEvent) {
     e.preventDefault();
     setFormError("");
 
@@ -57,22 +58,58 @@ export default function AdminPlayersPage() {
     }
 
     setSaving(true);
-    const { error } = await supabase.from("players").insert({
-      name: name.trim(),
-      role,
-      title: title.trim() || null,
-    });
-    setSaving(false);
 
-    if (error) {
-      setFormError(error.message);
-      return;
+    if (editingId) {
+      const { error } = await supabase
+        .from("players")
+        .update({
+          name: name.trim(),
+          role,
+          title: title.trim() || null,
+        })
+        .eq("id", editingId);
+
+      setSaving(false);
+
+      if (error) {
+        setFormError(error.message);
+        return;
+      }
+    } else {
+      const { error } = await supabase.from("players").insert({
+        name: name.trim(),
+        role,
+        title: title.trim() || null,
+      });
+
+      setSaving(false);
+
+      if (error) {
+        setFormError(error.message);
+        return;
+      }
     }
 
     setName("");
     setRole("Batsman");
     setTitle("");
+    setEditingId(null);
     loadPlayers();
+  }
+
+  function handleEditClick(player: Player) {
+    setEditingId(player.id);
+    setName(player.name);
+    setRole(player.role);
+    setTitle(player.title ?? "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleCancelEdit() {
+    setEditingId(null);
+    setName("");
+    setRole("Batsman");
+    setTitle("");
   }
 
   async function handleDelete(id: string) {
@@ -100,10 +137,13 @@ export default function AdminPlayersPage() {
   return (
     <main className="min-h-screen bg-black px-6 py-12 md:px-12">
       <div className="mx-auto max-w-4xl">
-        <a href="/admin" className="text-xs text-gray-500 hover:text-[var(--accent)] transition-colors">
+                <a href="/admin" className="text-xs text-gray-500 hover:text-[var(--accent)] transition-colors">
           &larr; Back to Dashboard
         </a>
         <h1 className="mt-2 font-heading text-2xl text-white">Manage Players</h1>
+        {editingId && (
+          <p className="mt-1 text-xs text-[var(--accent)]">Editing player &mdash; scroll down to update details</p>
+        )}
 
         <form
           onSubmit={handleAddPlayer}
@@ -154,13 +194,24 @@ export default function AdminPlayersPage() {
             <p className="text-xs text-red-400 sm:col-span-2">{formError}</p>
           )}
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-sm bg-[var(--accent)] px-4 py-2 text-sm font-medium text-black transition-transform hover:scale-[1.02] disabled:opacity-50 sm:col-span-2"
-          >
-            {saving ? "Adding..." : "Add Player"}
-          </button>
+                    <div className="flex gap-3 sm:col-span-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 rounded-sm bg-[var(--accent)] px-4 py-2 text-sm font-medium text-black transition-transform hover:scale-[1.02] disabled:opacity-50"
+            >
+              {saving ? "Saving..." : editingId ? "Save Changes" : "Add Player"}
+            </button>
+            {editingId && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="rounded-sm border border-[var(--border-strong)] px-4 py-2 text-sm text-white transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
 
         <div className="mt-10">
@@ -196,7 +247,13 @@ export default function AdminPlayersPage() {
                       </span>
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                                    <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditClick(player)}
+                      className="rounded-sm border border-[var(--border-subtle)] px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    >
+                      Edit
+                    </button>
                     <button
                       onClick={() => handleToggleStatus(player.id, player.status)}
                       className="rounded-sm border border-[var(--border-subtle)] px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
