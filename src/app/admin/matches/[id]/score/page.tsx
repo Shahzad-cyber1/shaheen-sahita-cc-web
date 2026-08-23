@@ -221,7 +221,31 @@ export default function ScorePage() {
     setStriker(finalStriker);
     setNonStriker(finalNonStriker);
 
+    if (options.isLegal && isOverComplete) {
+      promptNewBowler();
+    }
+
     setSaving(false);
+  }
+
+  function promptNewBowler() {
+    const availableBowlers = players.filter((p) => p.id !== bowler);
+
+    if (availableBowlers.length === 0) return;
+
+    const names = availableBowlers.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
+    const choice = window.prompt(
+      `Over complete. Who is bowling the next over?\n${names}`
+    );
+
+    if (!choice) return;
+
+    const index = parseInt(choice, 10) - 1;
+    const newBowler = availableBowlers[index];
+
+    if (newBowler) {
+      setBowler(newBowler.id);
+    }
   }
   
   async function handleWicket() {
