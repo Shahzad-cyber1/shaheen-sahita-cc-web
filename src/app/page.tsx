@@ -51,16 +51,10 @@ export default async function Home() {
 
   const tournaments = tournamentList ?? [];
 
-  const championships = tournaments.filter((t) => t.final_result === "Champions").length;
-  const finals = tournaments.filter((t) =>
-    ["Champions", "Finalist"].includes(t.final_result ?? "")
-  ).length;
-  const semiFinals = tournaments.filter((t) =>
-    ["Champions", "Finalist", "Semi-Finalist"].includes(t.final_result ?? "")
-  ).length;
-  const quarterFinals = tournaments.filter((t) =>
-    ["Champions", "Finalist", "Semi-Finalist", "Quarter-Finalist"].includes(t.final_result ?? "")
-  ).length;
+    const championships = tournaments.filter((t) => t.final_result === "Champions").length;
+  const finals = tournaments.filter((t) => t.final_result === "Finalist").length;
+  const semiFinals = tournaments.filter((t) => t.final_result === "Semi-Finalist").length;
+  const quarterFinals = tournaments.filter((t) => t.final_result === "Quarter-Finalist").length;
   const super8s = tournaments.filter((t) => t.final_result === "Super 8").length;
   const groupStages = tournaments.filter((t) => t.final_result === "Group Stage").length;
   return (
