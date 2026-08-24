@@ -105,7 +105,7 @@ export default function ScorePage() {
     setOpponentTeamPlayers(opponentPlayers);
     setPlayers([...ownPlayers, ...opponentPlayers]);
   }
-
+  
   const loadInnings = useCallback(async () => {
     const { data: matchStatus } = await supabase
       .from("matches")
@@ -132,18 +132,33 @@ export default function ScorePage() {
       setInnings(inProgress);
       setInningsNumber(inProgress.innings_number);
 
-      const { data: deliveries } = await supabase
+      const { data: lastDeliveries } = await supabase
         .from("deliveries")
-        .select("over_number, ball_number")
+        .select("over_number, ball_number, striker_id, non_striker_id, bowler_id, is_wicket")
         .eq("innings_id", inProgress.id)
-        .eq("is_legal_delivery", true)
-        .order("over_number", { ascending: false })
-        .order("ball_number", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(1);
 
-      if (deliveries && deliveries.length > 0) {
-        setCurrentOver(deliveries[0].over_number);
-        setCurrentBall(deliveries[0].ball_number);
+      if (lastDeliveries && lastDeliveries.length > 0) {
+        const last = lastDeliveries[0];
+
+        const { data: lastLegal } = await supabase
+          .from("deliveries")
+          .select("over_number, ball_number")
+          .eq("innings_id", inProgress.id)
+          .eq("is_legal_delivery", true)
+          .order("over_number", { ascending: false })
+          .order("ball_number", { ascending: false })
+          .limit(1);
+
+        if (lastLegal && lastLegal.length > 0) {
+          setCurrentOver(lastLegal[0].over_number);
+          setCurrentBall(lastLegal[0].ball_number);
+        }
+
+        if (last.striker_id) setStriker(last.striker_id);
+        if (last.non_striker_id) setNonStriker(last.non_striker_id);
+        if (last.bowler_id) setBowler(last.bowler_id);
       }
 
       if (inProgress.innings_number === 2) {
