@@ -26,6 +26,11 @@ export default function ScorePage() {
   const [ownTeamPlayers, setOwnTeamPlayers] = useState<Player[]>([]);
   const [opponentTeamPlayers, setOpponentTeamPlayers] = useState<Player[]>([]);
   const [maxOvers, setMaxOvers] = useState(8);
+  const [opponentName, setOpponentName] = useState("");
+  const [inningsNumber, setInningsNumber] = useState(1);
+  const [target, setTarget] = useState<number | null>(null);
+  const [firstInningsScore, setFirstInningsScore] = useState<number | null>(null);
+  const [firstInningsBattingTeam, setFirstInningsBattingTeam] = useState<"us" | "opponent">("us");
   const [innings, setInnings] = useState<Innings | null>(null);
 
   const [striker, setStriker] = useState("");
@@ -61,6 +66,10 @@ export default function ScorePage() {
       setMaxOvers(matchData.overs);
     }
 
+    if (matchData?.opponent) {
+      setOpponentName(matchData.opponent);
+    }
+
     const ownPlayers: Player[] = [];
 
     if (matchData?.playing_xi?.length) {
@@ -84,7 +93,7 @@ export default function ScorePage() {
   }
 
   const loadInnings = useCallback(async () => {
-    const { data } = await supabase
+    const { data: inProgress } = await supabase
       .from("innings")
       .select("id, innings_number, batting_team, total_runs, total_wickets, total_overs, status")
       .eq("match_id", matchId)
@@ -93,13 +102,14 @@ export default function ScorePage() {
       .limit(1)
       .maybeSingle();
 
-    setInnings(data);
+    if (inProgress) {
+      setInnings(inProgress);
+      setInningsNumber(inProgress.innings_number);
 
-    if (data) {
       const { data: deliveries } = await supabase
         .from("deliveries")
         .select("over_number, ball_number")
-        .eq("innings_id", data.id)
+        .eq("innings_id", inProgress.id)
         .eq("is_legal_delivery", true)
         .order("over_number", { ascending: false })
         .order("ball_number", { ascending: false })
@@ -109,16 +119,51 @@ export default function ScorePage() {
         setCurrentOver(deliveries[0].over_number);
         setCurrentBall(deliveries[0].ball_number);
       }
+
+      if (inProgress.innings_number === 2) {
+        const { data: firstInnings } = await supabase
+          .from("innings")
+          .select("total_runs")
+          .eq("match_id", matchId)
+          .eq("innings_number", 1)
+          .maybeSingle();
+
+        if (firstInnings) {
+          setFirstInningsScore(firstInnings.total_runs);
+          setTarget(firstInnings.total_runs + 1);
+        }
+      }
+      return;
     }
+
+    const { data: completedFirst } = await supabase
+      .from("innings")
+      .select("id, innings_number, batting_team, total_runs, total_wickets, total_overs, status")
+      .eq("match_id", matchId)
+      .eq("status", "completed")
+      .eq("innings_number", 1)
+      .maybeSingle();
+
+    if (completedFirst) {
+      setFirstInningsScore(completedFirst.total_runs);
+      setTarget(completedFirst.total_runs + 1);
+      setInningsNumber(2);
+    }
+
+    setInnings(null);
   }, [matchId]);
 
   async function handleStartInnings(battingTeam: "us" | "opponent") {
+    if (inningsNumber === 1) {
+      setFirstInningsBattingTeam(battingTeam);
+    }
+
     const { data, error } = await supabase
       .from("innings")
       .insert({
         match_id: matchId,
-        innings_number: 1,
-        batting_team: battingTeam === "us" ? "Shaheen Sahita CC" : "Opponent",
+        innings_number: inningsNumber,
+        batting_team: battingTeam === "us" ? "Shaheen Sahita CC" : (opponentName || "Opponent"),
       })
       .select()
       .single();
@@ -128,6 +173,13 @@ export default function ScorePage() {
       return;
     }
 
+    setCurrentOver(0);
+    setCurrentBall(0);
+    setRecentBalls([]);
+    setStriker("");
+    setNonStriker("");
+    setBowler("");
+    setMessage("");
     setInnings(data);
   }
 
@@ -327,6 +379,30 @@ export default function ScorePage() {
   }
 
   if (!innings) {
+    if (inningsNumber === 2 && firstInningsScore !== null) {
+      const secondBattingTeam = firstInningsBattingTeam === "us" ? "opponent" : "us";
+      return (
+        <main className="flex min-h-screen items-center justify-center bg-black px-6">
+          <div className="text-center">
+            <p className="text-sm text-gray-400">First innings complete.</p>
+            <p className="mt-1 font-heading text-2xl text-white">
+              Target: {target}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              {secondBattingTeam === "us" ? "Shaheen Sahita CC" : opponentName} needs {target} to win
+            </p>
+            <button
+              onClick={() => handleStartInnings(secondBattingTeam)}
+              className="mt-6 rounded-sm bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-black"
+            >
+              Start Second Innings
+            </button>
+            {message && <p className="mt-3 text-xs text-red-400">{message}</p>}
+          </div>
+        </main>
+      );
+    }
+
     return (
       <main className="flex min-h-screen items-center justify-center bg-black px-6">
         <div className="text-center">
@@ -342,7 +418,7 @@ export default function ScorePage() {
               onClick={() => handleStartInnings("opponent")}
               className="rounded-sm border border-[var(--border-strong)] px-6 py-2.5 text-sm text-white"
             >
-              Opponent
+              {opponentName || "Opponent"}
             </button>
           </div>
           {message && <p className="mt-3 text-xs text-red-400">{message}</p>}
@@ -372,6 +448,11 @@ export default function ScorePage() {
           <p className="mt-1 text-sm text-gray-400">
             Overs: {currentOver}.{currentBall}
           </p>
+          {target !== null && innings.innings_number === 2 && (
+            <p className="mt-2 text-xs text-[var(--accent)]">
+              Target: {target} &middot; Need {Math.max(target - innings.total_runs, 0)} runs
+            </p>
+          )}
         </div>
 
         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
