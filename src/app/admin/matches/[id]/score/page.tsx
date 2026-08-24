@@ -44,20 +44,35 @@ export default function ScorePage() {
   const [currentBall, setCurrentBall] = useState(0);
   const [recentBalls, setRecentBalls] = useState<string[]>([]);
   const [lastDeliveryId, setLastDeliveryId] = useState<string | null>(null);
+  const [pendingRestore, setPendingRestore] = useState<{
+    strikerId: string | null;
+    strikerName: string | null;
+    nonStrikerId: string | null;
+    nonStrikerName: string | null;
+    bowlerId: string | null;
+    bowlerName: string | null;
+  } | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
+
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.push("/login");
-      } else {
-        setCheckingAuth(false);
-        loadPlayers();
-        loadInnings();
+    if (!pendingRestore || players.length === 0) return;
+
+    function resolveValue(id: string | null, name: string | null): string {
+      if (id) return id;
+      if (name) {
+        const match = players.find((p) => p.name === name);
+        if (match) return match.id;
       }
-    });
-  }, [router, matchId]);
+      return "";
+    }
+
+    setStriker(resolveValue(pendingRestore.strikerId, pendingRestore.strikerName));
+    setNonStriker(resolveValue(pendingRestore.nonStrikerId, pendingRestore.nonStrikerName));
+    setBowler(resolveValue(pendingRestore.bowlerId, pendingRestore.bowlerName));
+    setPendingRestore(null);
+  }, [pendingRestore, players]);
 
   async function loadPlayers() {
     const { data: matchData } = await supabase
@@ -134,7 +149,7 @@ export default function ScorePage() {
 
       const { data: lastDeliveries } = await supabase
         .from("deliveries")
-        .select("over_number, ball_number, striker_id, non_striker_id, bowler_id, is_wicket")
+        .select("over_number, ball_number, striker_id, non_striker_id, bowler_id, striker_name, non_striker_name, bowler_name")
         .eq("innings_id", inProgress.id)
         .order("created_at", { ascending: false })
         .limit(1);
@@ -156,9 +171,14 @@ export default function ScorePage() {
           setCurrentBall(lastLegal[0].ball_number);
         }
 
-        if (last.striker_id) setStriker(last.striker_id);
-        if (last.non_striker_id) setNonStriker(last.non_striker_id);
-        if (last.bowler_id) setBowler(last.bowler_id);
+        setPendingRestore({
+          strikerId: last.striker_id,
+          strikerName: last.striker_name,
+          nonStrikerId: last.non_striker_id,
+          nonStrikerName: last.non_striker_name,
+          bowlerId: last.bowler_id,
+          bowlerName: last.bowler_name,
+        });
       }
 
       if (inProgress.innings_number === 2) {
