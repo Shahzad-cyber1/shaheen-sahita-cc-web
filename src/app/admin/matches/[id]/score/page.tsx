@@ -32,6 +32,7 @@ export default function ScorePage() {
   const [firstInningsScore, setFirstInningsScore] = useState<number | null>(null);
   const [firstInningsBattingTeam, setFirstInningsBattingTeam] = useState<"us" | "opponent">("us");
   const [determinedFirstBattingTeam, setDeterminedFirstBattingTeam] = useState<"us" | "opponent" | null>(null);
+  const [matchComplete, setMatchComplete] = useState(false);
   const [innings, setInnings] = useState<Innings | null>(null);
 
   const [striker, setStriker] = useState("");
@@ -104,6 +105,18 @@ export default function ScorePage() {
   }
 
   const loadInnings = useCallback(async () => {
+    const { data: matchStatus } = await supabase
+      .from("matches")
+      .select("status, result")
+      .eq("id", matchId)
+      .single();
+
+    if (matchStatus?.status === "completed") {
+      setMatchComplete(true);
+      setMessage(matchStatus.result ?? "Match complete.");
+      return;
+    }
+
     const { data: inProgress } = await supabase
       .from("innings")
       .select("id, innings_number, batting_team, total_runs, total_wickets, total_overs, status")
@@ -297,20 +310,27 @@ export default function ScorePage() {
         const chasingTeam = innings.batting_team;
         const defendingTeam = firstInningsBattingTeam === "us" ? "Shaheen Sahita CC" : (opponentName || "Opponent");
 
+        let resultText = "";
         if (target !== null && newTotalRuns >= target) {
           const wicketsLeft = 10 - newWickets;
-          setMessage(`${chasingTeam} won by ${wicketsLeft} wicket${wicketsLeft === 1 ? "" : "s"}!`);
+          resultText = `${chasingTeam} won by ${wicketsLeft} wicket${wicketsLeft === 1 ? "" : "s"}!`;
         } else if (newWickets >= 10) {
           const runsShort = (target ?? 0) - newTotalRuns - 1;
-          setMessage(`${defendingTeam} won by ${runsShort} run${runsShort === 1 ? "" : "s"}!`);
+          resultText = `${defendingTeam} won by ${runsShort} run${runsShort === 1 ? "" : "s"}!`;
         } else {
           const runsShort = (target ?? 0) - newTotalRuns - 1;
-          if (runsShort >= 0) {
-            setMessage(`${defendingTeam} won by ${runsShort} run${runsShort === 1 ? "" : "s"}!`);
-          } else {
-            setMessage(`${chasingTeam} won!`);
-          }
+          resultText = runsShort >= 0
+            ? `${defendingTeam} won by ${runsShort} run${runsShort === 1 ? "" : "s"}!`
+            : `${chasingTeam} won!`;
         }
+
+        setMessage(resultText);
+        setMatchComplete(true);
+
+        await supabase
+          .from("matches")
+          .update({ status: "completed", result: resultText })
+          .eq("id", matchId);
       }
       setInnings(null);
       setSaving(false);
@@ -418,6 +438,18 @@ export default function ScorePage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black">
         <p className="text-sm text-gray-500">Loading...</p>
+      </main>
+    );
+  }
+
+  if (matchComplete) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-black px-6">
+        <div className="text-center">
+          <p className="text-xs tracking-widest text-[var(--accent)]">MATCH COMPLETE</p>
+          <p className="mt-3 font-heading text-2xl text-white">{message}</p>
+          <a href="/admin/matches" className="mt-6 inline-block rounded-sm border border-[var(--border-strong)] px-6 py-2.5 text-sm text-white">Back to Matches</a>
+        </div>
       </main>
     );
   }
