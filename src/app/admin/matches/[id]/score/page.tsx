@@ -794,7 +794,7 @@ export default function ScorePage() {
           <button
             disabled={saving}
             onClick={() => handleExtraWithRuns("wide")}
-            className="rounded-lg border border-blue-800 bg-blue-950/40 py-3 text-xs font-semibold text-blue-300 transition-all active:scale-90 disabled:opacity-40"
+            className="rounded-lg border border-cyan-700 bg-cyan-950/40 py-3 text-xs font-semibold text-cyan-300 transition-all active:scale-90 disabled:opacity-40"
           >
             WD
           </button>
