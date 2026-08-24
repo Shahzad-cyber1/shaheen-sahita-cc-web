@@ -33,6 +33,7 @@ export default function ScorePage() {
   const [firstInningsBattingTeam, setFirstInningsBattingTeam] = useState<"us" | "opponent">("us");
   const [determinedFirstBattingTeam, setDeterminedFirstBattingTeam] = useState<"us" | "opponent" | null>(null);
   const [matchComplete, setMatchComplete] = useState(false);
+  const [bowlerLockedForOver, setBowlerLockedForOver] = useState(false);
   const [innings, setInnings] = useState<Innings | null>(null);
 
   const [striker, setStriker] = useState("");
@@ -267,6 +268,7 @@ export default function ScorePage() {
         const newOverCount = currentOver + 1;
         setCurrentOver(newOverCount);
         setCurrentBall(0);
+        setBowlerLockedForOver(false);
 
         if (newOverCount >= maxOvers) {
           inningsEnded = true;
@@ -377,7 +379,7 @@ export default function ScorePage() {
     setSaving(false);
   }
 
-  function promptNewBowler() {
+  function promptNewBowler(isInjuryChange = false) {
     const bowlingTeamPlayers = innings?.batting_team === "Shaheen Sahita CC" ? opponentTeamPlayers : ownTeamPlayers;
     const availableBowlers = bowlingTeamPlayers.filter((p) => p.id !== bowler);
 
@@ -388,9 +390,10 @@ export default function ScorePage() {
     let newBowler = null;
     while (!newBowler) {
       const names = availableBowlers.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
-      const choice = window.prompt(
-        `Over complete. You MUST select the next bowler.\n${names}`
-      );
+      const promptText = isInjuryChange
+        ? `Injury / mid-over change. Select the replacement bowler.\n${names}`
+        : `Over complete. You MUST select the next bowler.\n${names}`;
+      const choice = window.prompt(promptText);
 
       if (choice === null) {
         continue;
@@ -402,6 +405,10 @@ export default function ScorePage() {
       if (!newBowler) {
         window.alert("Invalid selection. Please choose a valid number.");
       }
+    }
+
+    if (isInjuryChange) {
+      setBowlerLockedForOver(true);
     }
 
     setBowler(newBowler.id);
@@ -797,11 +804,11 @@ export default function ScorePage() {
 
         <div className="mt-4 flex gap-2">
           <button
-            onClick={promptNewBowler}
-            disabled={saving}
+            onClick={() => promptNewBowler(true)}
+            disabled={saving || bowlerLockedForOver}
             className="flex-1 rounded-sm border border-[var(--border-subtle)] py-2 text-xs text-gray-300 disabled:opacity-50"
           >
-            Change Bowler
+            {bowlerLockedForOver ? "Bowler Set for Over" : "Injury / Change Bowler"}
           </button>
           <button
             onClick={handleDeclareInnings}
