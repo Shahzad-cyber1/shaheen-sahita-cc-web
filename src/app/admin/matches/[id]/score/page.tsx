@@ -42,6 +42,7 @@ export default function ScorePage() {
   const [currentOver, setCurrentOver] = useState(0);
   const [currentBall, setCurrentBall] = useState(0);
   const [recentBalls, setRecentBalls] = useState<string[]>([]);
+  const [lastDeliveryId, setLastDeliveryId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -226,25 +227,33 @@ export default function ScorePage() {
     const nextBall = options.isLegal ? currentBall + 1 : currentBall;
     const isOverComplete = options.isLegal && nextBall === 6;
 
-    const { error } = await supabase.from("deliveries").insert({
-      innings_id: innings.id,
-      over_number: currentOver,
-      ball_number: options.isLegal ? nextBall : currentBall + 1,
-      striker_id: striker.startsWith("opp-") ? null : striker,
-      non_striker_id: nonStriker.startsWith("opp-") ? null : nonStriker,
-      bowler_id: bowler.startsWith("opp-") ? null : bowler,
-      runs_off_bat: options.runsOffBat ?? 0,
-      extra_type: options.extraType ?? null,
-      extra_runs: options.extraRuns ?? 0,
-      is_wicket: options.isWicket ?? false,
-      wicket_type: options.wicketType ?? null,
-      is_legal_delivery: options.isLegal,
-    });
+    const { data: insertedDelivery, error } = await supabase
+      .from("deliveries")
+      .insert({
+        innings_id: innings.id,
+        over_number: currentOver,
+        ball_number: options.isLegal ? nextBall : currentBall + 1,
+        striker_id: striker.startsWith("opp-") ? null : striker,
+        non_striker_id: nonStriker.startsWith("opp-") ? null : nonStriker,
+        bowler_id: bowler.startsWith("opp-") ? null : bowler,
+        runs_off_bat: options.runsOffBat ?? 0,
+        extra_type: options.extraType ?? null,
+        extra_runs: options.extraRuns ?? 0,
+        is_wicket: options.isWicket ?? false,
+        wicket_type: options.wicketType ?? null,
+        is_legal_delivery: options.isLegal,
+      })
+      .select()
+      .single();
 
     if (error) {
       setSaving(false);
       setMessage("Error: " + error.message);
       return;
+    }
+
+    if (insertedDelivery) {
+      setLastDeliveryId(insertedDelivery.id);
     }
 
     const totalRuns = (options.runsOffBat ?? 0) + (options.extraRuns ?? 0);
@@ -398,6 +407,68 @@ export default function ScorePage() {
     setBowler(newBowler.id);
   }
   
+  async function handleUndo() {
+    if (!lastDeliveryId || !innings) {
+      setMessage("Nothing to undo.");
+      return;
+    }
+
+    const { data: deliveryToUndo } = await supabase
+      .from("deliveries")
+      .select("*")
+      .eq("id", lastDeliveryId)
+      .single();
+
+    if (!deliveryToUndo) {
+      setMessage("Could not find last delivery.");
+      return;
+    }
+
+    setSaving(true);
+
+    await supabase.from("deliveries").delete().eq("id", lastDeliveryId);
+
+    const runsToRemove = deliveryToUndo.runs_off_bat + deliveryToUndo.extra_runs;
+    const newTotalRuns = Math.max(innings.total_runs - runsToRemove, 0);
+    const newWickets = deliveryToUndo.is_wicket
+      ? Math.max(innings.total_wickets - 1, 0)
+      : innings.total_wickets;
+
+    if (deliveryToUndo.is_legal_delivery) {
+      if (currentBall === 0) {
+        setCurrentOver(Math.max(currentOver - 1, 0));
+        setCurrentBall(5);
+      } else {
+        setCurrentBall(currentBall - 1);
+      }
+    }
+
+    const newOversDisplay =
+      currentBall === 0 && deliveryToUndo.is_legal_delivery
+        ? Math.max(currentOver - 1, 0) + 5 / 10
+        : currentOver + Math.max(currentBall - (deliveryToUndo.is_legal_delivery ? 1 : 0), 0) / 10;
+
+    await supabase
+      .from("innings")
+      .update({
+        total_runs: newTotalRuns,
+        total_wickets: newWickets,
+        total_overs: newOversDisplay,
+      })
+      .eq("id", innings.id);
+
+    setInnings({
+      ...innings,
+      total_runs: newTotalRuns,
+      total_wickets: newWickets,
+      total_overs: newOversDisplay,
+    });
+
+    setRecentBalls((prev) => prev.slice(0, -1));
+    setLastDeliveryId(null);
+    setMessage("Last delivery undone.");
+    setSaving(false);
+  }
   async function handleWicket() {
     if (innings && innings.total_wickets >= 10) {
       setMessage("Innings is all out.");
@@ -561,12 +632,21 @@ export default function ScorePage() {
           {strikerName}* &amp; {nonStrikerName} &middot; {bowlerName} bowling
         </p>
 
-        <div className="mt-3 flex flex-wrap justify-center gap-1">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-1">
           {recentBalls.map((b, i) => (
             <span key={i} className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--background-elevated)] text-[10px] text-white">
               {b}
             </span>
           ))}
+          {lastDeliveryId && (
+            <button
+              onClick={handleUndo}
+              disabled={saving}
+              className="ml-2 rounded-sm border border-[var(--border-strong)] px-2 py-1 text-[10px] text-white disabled:opacity-50"
+            >
+              UNDO
+            </button>
+          )}
         </div>
 
         <div className="mt-6 grid grid-cols-3 gap-2">
