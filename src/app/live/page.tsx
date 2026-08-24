@@ -12,6 +12,7 @@ type Delivery = {
   is_legal_delivery: boolean;
   striker_id: string | null;
   bowler_id: string | null;
+  non_striker_id: string | null;
   striker_name: string | null;
   bowler_name: string | null;
   created_at: string;
@@ -72,7 +73,7 @@ export default async function LivePage() {
   if (innings) {
     const { data } = await supabase
       .from("deliveries")
-      .select("over_number, ball_number, runs_off_bat, extra_type, extra_runs, is_wicket, is_legal_delivery, striker_id, bowler_id, striker_name, bowler_name, created_at")
+      .select("over_number, ball_number, runs_off_bat, extra_type, extra_runs, is_wicket, is_legal_delivery, striker_id, bowler_id, non_striker_id, striker_name, bowler_name, created_at")
       .eq("innings_id", innings.id)
       .order("created_at", { ascending: true });
     deliveries = data ?? [];
@@ -119,6 +120,7 @@ export default async function LivePage() {
   // Determine current striker/bowler from most recent delivery
   const lastDelivery = deliveries[deliveries.length - 1];
   const currentStrikerId = lastDelivery?.striker_id ?? "opp";
+  const currentNonStrikerId = lastDelivery?.non_striker_id ?? "opp2";
   const currentBowlerId = lastDelivery?.bowler_id ?? "opp";
 
   function oversDisplay(balls: number) {
@@ -182,13 +184,14 @@ export default async function LivePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(battingStats)
-                    .filter(([id]) => id === currentStrikerId || battingStats[id].balls > 0)
-                    .slice(-2)
-                    .map(([id, stats]) => (
+                  {[currentStrikerId, currentNonStrikerId].map((id) => {
+                    const stats = battingStats[id] ?? { runs: 0, balls: 0, fours: 0, sixes: 0 };
+                    const nameFromDelivery =
+                      deliveries.slice().reverse().find((d) => d.striker_id === id || (id === "opp" && d.striker_name))?.striker_name;
+                    return (
                       <tr key={id} className="border-b border-[var(--border-subtle)] text-white">
                         <td className="px-3 py-2">
-                          {resolveName(id === "opp" ? null : id, lastDelivery?.striker_id === id ? lastDelivery.striker_name : deliveries.find((d) => d.striker_id === id)?.striker_name)}
+                          {resolveName(id.startsWith("opp") ? null : id, nameFromDelivery)}
                           {id === currentStrikerId && <span className="text-[var(--accent)]"> *</span>}
                         </td>
                         <td className="px-2 py-2 text-right font-semibold">{stats.runs}</td>
@@ -199,7 +202,8 @@ export default async function LivePage() {
                           {stats.balls > 0 ? ((stats.runs / stats.balls) * 100).toFixed(1) : "0.0"}
                         </td>
                       </tr>
-                    ))}
+                    );
+                  })}
                 </tbody>
               </table>
 
@@ -214,7 +218,7 @@ export default async function LivePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {bowlingStats[currentBowlerId] && (
+                  {currentBowlerId && bowlingStats[currentBowlerId] && (
                     <tr className="text-white">
                       <td className="px-3 py-2">
                         {resolveName(currentBowlerId === "opp" ? null : currentBowlerId, lastDelivery?.bowler_name)}
