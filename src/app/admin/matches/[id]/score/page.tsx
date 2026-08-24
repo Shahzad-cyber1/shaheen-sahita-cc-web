@@ -545,6 +545,59 @@ export default function ScorePage() {
 
     setStriker(newBatter.id);
   }
+  
+  async function handleDeclareInnings() {
+    if (!innings) return;
+
+    const confirmed = window.confirm(
+      `Declare/end this innings now at ${innings.total_runs}/${innings.total_wickets}?`
+    );
+    if (!confirmed) return;
+
+    setSaving(true);
+
+    if (innings.innings_number === 1) {
+      setFirstInningsScore(innings.total_runs);
+      setTarget(innings.total_runs + 1);
+      setInningsNumber(2);
+      setMessage(`First innings declared: ${innings.total_runs}/${innings.total_wickets}.`);
+
+      await supabase
+        .from("innings")
+        .update({ status: "completed" })
+        .eq("id", innings.id);
+    } else {
+      const chasingTeam = innings.batting_team;
+      const defendingTeam = firstInningsBattingTeam === "us" ? "Shaheen Sahita CC" : (opponentName || "Opponent");
+
+      let resultText = "";
+      if (target !== null && innings.total_runs >= target) {
+        const wicketsLeft = 10 - innings.total_wickets;
+        resultText = `${chasingTeam} won by ${wicketsLeft} wicket${wicketsLeft === 1 ? "" : "s"}!`;
+      } else {
+        const runsShort = (target ?? 0) - innings.total_runs - 1;
+        resultText = runsShort >= 0
+          ? `${defendingTeam} won by ${runsShort} run${runsShort === 1 ? "" : "s"}!`
+          : `${chasingTeam} won!`;
+      }
+
+      setMessage(resultText);
+      setMatchComplete(true);
+
+      await supabase
+        .from("innings")
+        .update({ status: "completed" })
+        .eq("id", innings.id);
+
+      await supabase
+        .from("matches")
+        .update({ status: "completed", result: resultText })
+        .eq("id", matchId);
+    }
+
+    setInnings(null);
+    setSaving(false);
+  }
 
   if (checkingAuth) {
     return (
@@ -741,6 +794,23 @@ export default function ScorePage() {
         >
           {innings.total_wickets >= 10 ? "ALL OUT" : "WICKET"}
         </button>
+
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={promptNewBowler}
+            disabled={saving}
+            className="flex-1 rounded-sm border border-[var(--border-subtle)] py-2 text-xs text-gray-300 disabled:opacity-50"
+          >
+            Change Bowler
+          </button>
+          <button
+            onClick={handleDeclareInnings}
+            disabled={saving}
+            className="flex-1 rounded-sm border border-[var(--border-subtle)] py-2 text-xs text-gray-300 disabled:opacity-50"
+          >
+            Declare Innings
+          </button>
+        </div>
 
         {message && <p className="mt-3 text-center text-xs text-red-400">{message}</p>}
       </div>
