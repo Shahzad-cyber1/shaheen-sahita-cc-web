@@ -25,6 +25,7 @@ export default function ScorePage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [ownTeamPlayers, setOwnTeamPlayers] = useState<Player[]>([]);
   const [opponentTeamPlayers, setOpponentTeamPlayers] = useState<Player[]>([]);
+  const [maxOvers, setMaxOvers] = useState(8);
   const [innings, setInnings] = useState<Innings | null>(null);
 
   const [striker, setStriker] = useState("");
@@ -52,9 +53,13 @@ export default function ScorePage() {
   async function loadPlayers() {
     const { data: matchData } = await supabase
       .from("matches")
-      .select("playing_xi, opponent_players, opponent")
+      .select("playing_xi, opponent_players, opponent, overs")
       .eq("id", matchId)
       .single();
+
+    if (matchData?.overs) {
+      setMaxOvers(matchData.overs);
+    }
 
     const ownPlayers: Player[] = [];
 
@@ -170,10 +175,17 @@ export default function ScorePage() {
     const newTotalRuns = innings.total_runs + totalRuns;
     const newWickets = innings.total_wickets + (options.isWicket ? 1 : 0);
 
+    let inningsEnded = false;
+
     if (options.isLegal) {
       if (isOverComplete) {
-        setCurrentOver(currentOver + 1);
+        const newOverCount = currentOver + 1;
+        setCurrentOver(newOverCount);
         setCurrentBall(0);
+
+        if (newOverCount >= maxOvers) {
+          inningsEnded = true;
+        }
       } else {
         setCurrentBall(nextBall);
       }
@@ -198,8 +210,16 @@ export default function ScorePage() {
         total_runs: newTotalRuns,
         total_wickets: newWickets,
         total_overs: oversDisplay,
+        status: inningsEnded ? "completed" : "in_progress",
       })
       .eq("id", innings.id);
+
+    if (inningsEnded) {
+      setMessage(`Innings complete: ${maxOvers} overs reached.`);
+      setInnings(null);
+      setSaving(false);
+      return;
+    }
 
     setInnings({
       ...innings,
@@ -233,23 +253,33 @@ export default function ScorePage() {
   }
 
   function promptNewBowler() {
-    const availableBowlers = players.filter((p) => p.id !== bowler);
+    const bowlingTeamPlayers = innings?.batting_team === "Shaheen Sahita CC" ? opponentTeamPlayers : ownTeamPlayers;
+    const availableBowlers = bowlingTeamPlayers.filter((p) => p.id !== bowler);
 
     if (availableBowlers.length === 0) return;
 
-    const names = availableBowlers.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
-    const choice = window.prompt(
-      `Over complete. Who is bowling the next over?\n${names}`
-    );
+    setBowler("");
 
-    if (!choice) return;
+    let newBowler = null;
+    while (!newBowler) {
+      const names = availableBowlers.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
+      const choice = window.prompt(
+        `Over complete. You MUST select the next bowler.\n${names}`
+      );
 
-    const index = parseInt(choice, 10) - 1;
-    const newBowler = availableBowlers[index];
+      if (choice === null) {
+        continue;
+      }
 
-    if (newBowler) {
-      setBowler(newBowler.id);
+      const index = parseInt(choice, 10) - 1;
+      newBowler = availableBowlers[index];
+
+      if (!newBowler) {
+        window.alert("Invalid selection. Please choose a valid number.");
+      }
     }
+
+    setBowler(newBowler.id);
   }
   
   async function handleWicket() {
@@ -258,7 +288,8 @@ export default function ScorePage() {
       return;
     }
 
-    const availableBatters = players.filter(
+    const battingTeamPlayers = innings?.batting_team === "Shaheen Sahita CC" ? ownTeamPlayers : opponentTeamPlayers;
+    const availableBatters = battingTeamPlayers.filter(
       (p) => p.id !== striker && p.id !== nonStriker
     );
 
@@ -346,11 +377,11 @@ export default function ScorePage() {
         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
           <select value={striker} onChange={(e) => setStriker(e.target.value)} className="rounded-sm border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-2 py-2 text-white">
             <option value="">Striker</option>
-            {battingPlayers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {battingPlayers.filter((p) => p.id !== nonStriker).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
           <select value={nonStriker} onChange={(e) => setNonStriker(e.target.value)} className="rounded-sm border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-2 py-2 text-white">
             <option value="">Non-Striker</option>
-            {battingPlayers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {battingPlayers.filter((p) => p.id !== striker).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
           <select value={bowler} onChange={(e) => setBowler(e.target.value)} className="rounded-sm border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-2 py-2 text-white">
             <option value="">Bowler</option>
