@@ -55,26 +55,7 @@ export default function ScorePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-
-  useEffect(() => {
-    if (!pendingRestore || players.length === 0) return;
-
-    function resolveValue(id: string | null, name: string | null): string {
-      if (id) return id;
-      if (name) {
-        const match = players.find((p) => p.name === name);
-        if (match) return match.id;
-      }
-      return "";
-    }
-
-    setStriker(resolveValue(pendingRestore.strikerId, pendingRestore.strikerName));
-    setNonStriker(resolveValue(pendingRestore.nonStrikerId, pendingRestore.nonStrikerName));
-    setBowler(resolveValue(pendingRestore.bowlerId, pendingRestore.bowlerName));
-    setPendingRestore(null);
-  }, [pendingRestore, players]);
-
-  async function loadPlayers() {
+  const loadPlayers = useCallback(async () => {
     const { data: matchData } = await supabase
       .from("matches")
       .select("playing_xi, opponent_players, opponent, overs, toss_winner, toss_decision")
@@ -119,8 +100,8 @@ export default function ScorePage() {
     setOwnTeamPlayers(ownPlayers);
     setOpponentTeamPlayers(opponentPlayers);
     setPlayers([...ownPlayers, ...opponentPlayers]);
-  }
-  
+  }, [matchId]);
+
   const loadInnings = useCallback(async () => {
     const { data: matchStatus } = await supabase
       .from("matches")
@@ -214,6 +195,36 @@ export default function ScorePage() {
     setInnings(null);
   }, [matchId]);
 
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        router.push("/login");
+      } else {
+        setCheckingAuth(false);
+        loadPlayers();
+        loadInnings();
+      }
+    });
+  }, [router, matchId, loadPlayers, loadInnings]);
+
+  useEffect(() => {
+    if (!pendingRestore || players.length === 0) return;
+
+    function resolveValue(id: string | null, name: string | null): string {
+      if (id) return id;
+      if (name) {
+        const match = players.find((p) => p.name === name);
+        if (match) return match.id;
+      }
+      return "";
+    }
+
+    setStriker(resolveValue(pendingRestore.strikerId, pendingRestore.strikerName));
+    setNonStriker(resolveValue(pendingRestore.nonStrikerId, pendingRestore.nonStrikerName));
+    setBowler(resolveValue(pendingRestore.bowlerId, pendingRestore.bowlerName));
+    setPendingRestore(null);
+  }, [pendingRestore, players]);
+
   async function handleStartInnings(battingTeam: "us" | "opponent") {
     if (inningsNumber === 1) {
       setFirstInningsBattingTeam(battingTeam);
@@ -264,6 +275,7 @@ export default function ScorePage() {
     const isOverComplete = options.isLegal && nextBall === 6;
 
     const strikerPlayer = players.find((p) => p.id === striker);
+    const nonStrikerPlayer = players.find((p) => p.id === nonStriker);
     const bowlerPlayer = players.find((p) => p.id === bowler);
 
     const { data: insertedDelivery, error } = await supabase
@@ -276,6 +288,7 @@ export default function ScorePage() {
         non_striker_id: nonStriker.startsWith("opp-") ? null : nonStriker,
         bowler_id: bowler.startsWith("opp-") ? null : bowler,
         striker_name: strikerPlayer?.name ?? null,
+        non_striker_name: nonStrikerPlayer?.name ?? null,
         bowler_name: bowlerPlayer?.name ?? null,
         runs_off_bat: options.runsOffBat ?? 0,
         extra_type: options.extraType ?? null,
@@ -453,7 +466,7 @@ export default function ScorePage() {
 
     setBowler(newBowler.id);
   }
-  
+
   async function handleUndo() {
     if (!lastDeliveryId || !innings) {
       setMessage("Nothing to undo.");
@@ -519,7 +532,7 @@ export default function ScorePage() {
     setMessage("Last delivery undone.");
     setSaving(false);
   }
-  
+
   function handleExtraWithRuns(type: "wide" | "no-ball" | "bye" | "leg-bye") {
     const labels: Record<string, string> = {
       wide: "Wide",
@@ -541,8 +554,6 @@ export default function ScorePage() {
       return;
     }
 
-    // Wide and No Ball are illegal deliveries; base 1 run always counts.
-    // Bye and Leg Bye are legal deliveries; runs taken ARE the extra (no base 1 unless 0 run).
     if (type === "wide" || type === "no-ball") {
       recordDelivery({
         extraType: type,
@@ -557,6 +568,7 @@ export default function ScorePage() {
       });
     }
   }
+
   async function handleWicket() {
     if (innings && innings.total_wickets >= 10) {
       setMessage("Innings is all out.");
@@ -592,7 +604,7 @@ export default function ScorePage() {
 
     setStriker(newBatter.id);
   }
-  
+
   async function handleDeclareInnings() {
     if (!innings) return;
 
