@@ -700,16 +700,18 @@ export default function ScorePage() {
           &larr; Back
         </a>
 
-        <div className="glass-panel mt-3 rounded-sm p-4 text-center">
-          <p className="font-heading text-4xl text-white">
-            {innings.total_runs}/{innings.total_wickets}
+        <div className="relative mt-3 overflow-hidden rounded-xl border border-[var(--border-strong)] bg-gradient-to-b from-[var(--background-elevated)] to-black p-5 text-center">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(212,175,55,0.12),transparent_70%)]" />
+          <p className="relative text-xs tracking-widest text-gray-500">{innings.batting_team.toUpperCase()}</p>
+          <p className="relative mt-1 font-heading text-5xl font-bold text-gold-gradient">
+            {innings.total_runs}<span className="text-white">/</span>{innings.total_wickets}
           </p>
-          <p className="mt-1 text-sm text-gray-400">
-            Overs: {currentOver}.{currentBall}
+          <p className="relative mt-1 text-sm text-gray-400">
+            Overs {currentOver}.{currentBall} <span className="text-gray-600">/ {maxOvers}</span>
           </p>
           {target !== null && innings.innings_number === 2 && (
-            <p className="mt-2 text-xs text-[var(--accent)]">
-              Target: {target} &middot; Need {Math.max(target - innings.total_runs, 0)} runs
+            <p className="relative mt-3 rounded-md border border-[var(--accent)]/30 bg-[var(--accent)]/10 py-1.5 text-xs text-[var(--accent-light)]">
+              🎯 Target {target} &middot; Need {Math.max(target - innings.total_runs, 0)} runs
             </p>
           )}
         </div>
@@ -733,73 +735,98 @@ export default function ScorePage() {
           {strikerName}* &amp; {nonStrikerName} &middot; {bowlerName} bowling
         </p>
 
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-1">
-          {recentBalls.map((b, i) => (
-            <span key={i} className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--background-elevated)] text-[10px] text-white">
-              {b}
-            </span>
-          ))}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5">
+          {recentBalls.map((b, i) => {
+            const isWicket = b === "W";
+            const isBoundary = b === "4" || b === "6";
+            const isExtra = ["W", "N", "B", "L"].includes(b) && !isWicket;
+            return (
+              <span
+                key={i}
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                  isWicket
+                    ? "bg-red-600 text-white"
+                    : isBoundary
+                    ? "bg-[var(--accent)] text-black"
+                    : isExtra
+                    ? "border border-[var(--border-strong)] bg-[var(--background-elevated)] text-gray-300"
+                    : "bg-[var(--background-elevated)] text-gray-400"
+                }`}
+              >
+                {b}
+              </span>
+            );
+          })}
           {lastDeliveryId && (
             <button
               onClick={handleUndo}
               disabled={saving}
-              className="ml-2 rounded-sm border border-[var(--border-strong)] px-2 py-1 text-[10px] text-white disabled:opacity-50"
+              className="ml-2 rounded-md border border-[var(--border-strong)] px-2.5 py-1.5 text-[10px] font-medium text-white transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-50"
             >
-              UNDO
+              ↺ UNDO
             </button>
           )}
         </div>
 
-        <div className="mt-6 grid grid-cols-3 gap-2">
-          {[0, 1, 2, 3, 4, 6].map((run) => (
-            <button
-              key={run}
-              disabled={saving}
-              onClick={() => recordDelivery({ runsOffBat: run, isLegal: true })}
-              className="rounded-sm bg-[var(--background-elevated)] py-4 text-xl font-semibold text-white active:scale-95 disabled:opacity-50"
-            >
-              {run}
-            </button>
-          ))}
+        <div className="mt-6 grid grid-cols-3 gap-2.5">
+          {[0, 1, 2, 3, 4, 6].map((run) => {
+            const isBoundary = run === 4 || run === 6;
+            return (
+              <button
+                key={run}
+                disabled={saving}
+                onClick={() => recordDelivery({ runsOffBat: run, isLegal: true })}
+                className={`relative overflow-hidden rounded-lg py-5 text-2xl font-bold transition-all active:scale-90 disabled:opacity-40 ${
+                  isBoundary
+                    ? "bg-gradient-to-br from-[var(--accent-light)] to-[var(--accent-dark)] text-black shadow-[0_0_20px_rgba(212,175,55,0.35)]"
+                    : "border border-[var(--border-subtle)] bg-[var(--background-elevated)] text-white hover:border-[var(--border-strong)]"
+                }`}
+              >
+                {run}
+                {run === 6 && <span className="absolute right-2 top-1 text-[9px] opacity-70">MAX</span>}
+                {run === 4 && <span className="absolute right-2 top-1 text-[9px] opacity-70">FOUR</span>}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-4 gap-2">
           <button
             disabled={saving}
             onClick={() => handleExtraWithRuns("wide")}
-            className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
+            className="rounded-lg border border-blue-800 bg-blue-950/40 py-3 text-xs font-semibold text-blue-300 transition-all active:scale-90 disabled:opacity-40"
           >
-            WIDE
+            WD
           </button>
           <button
             disabled={saving}
             onClick={() => handleExtraWithRuns("no-ball")}
-            className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
+            className="rounded-lg border border-orange-800 bg-orange-950/40 py-3 text-xs font-semibold text-orange-300 transition-all active:scale-90 disabled:opacity-40"
           >
-            NO BALL
+            NB
           </button>
           <button
             disabled={saving}
             onClick={() => handleExtraWithRuns("bye")}
-            className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
+            className="rounded-lg border border-purple-800 bg-purple-950/40 py-3 text-xs font-semibold text-purple-300 transition-all active:scale-90 disabled:opacity-40"
           >
             BYE
           </button>
           <button
             disabled={saving}
             onClick={() => handleExtraWithRuns("leg-bye")}
-            className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
+            className="rounded-lg border border-teal-800 bg-teal-950/40 py-3 text-xs font-semibold text-teal-300 transition-all active:scale-90 disabled:opacity-40"
           >
-            LEG BYE
+            LB
           </button>
         </div>
 
         <button
           disabled={saving || innings.total_wickets >= 10}
           onClick={handleWicket}
-          className="mt-3 w-full rounded-sm bg-red-600 py-3 text-sm font-semibold text-white disabled:opacity-50"
+          className="mt-3 w-full rounded-lg bg-gradient-to-r from-red-700 to-red-600 py-4 text-base font-bold tracking-widest text-white shadow-[0_0_25px_rgba(220,38,38,0.4)] transition-all active:scale-95 disabled:opacity-40 disabled:shadow-none"
         >
-          {innings.total_wickets >= 10 ? "ALL OUT" : "WICKET"}
+          {innings.total_wickets >= 10 ? "ALL OUT" : "🏏 WICKET"}
         </button>
 
         <div className="mt-4 flex gap-2">
