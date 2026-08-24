@@ -23,6 +23,8 @@ export default function ScorePage() {
 
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [ownTeamPlayers, setOwnTeamPlayers] = useState<Player[]>([]);
+  const [opponentTeamPlayers, setOpponentTeamPlayers] = useState<Player[]>([]);
   const [innings, setInnings] = useState<Innings | null>(null);
 
   const [striker, setStriker] = useState("");
@@ -50,7 +52,7 @@ export default function ScorePage() {
   async function loadPlayers() {
     const { data: matchData } = await supabase
       .from("matches")
-      .select("playing_xi, opponent_players")
+      .select("playing_xi, opponent_players, opponent")
       .eq("id", matchId)
       .single();
 
@@ -71,6 +73,8 @@ export default function ScorePage() {
       })
     );
 
+    setOwnTeamPlayers(ownPlayers);
+    setOpponentTeamPlayers(opponentPlayers);
     setPlayers([...ownPlayers, ...opponentPlayers]);
   }
 
@@ -103,13 +107,13 @@ export default function ScorePage() {
     }
   }, [matchId]);
 
-  async function handleStartInnings() {
+  async function handleStartInnings(battingTeam: "us" | "opponent") {
     const { data, error } = await supabase
       .from("innings")
       .insert({
         match_id: matchId,
         innings_number: 1,
-        batting_team: "Shaheen Sahita CC",
+        batting_team: battingTeam === "us" ? "Shaheen Sahita CC" : "Opponent",
       })
       .select()
       .single();
@@ -295,22 +299,33 @@ export default function ScorePage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black px-6">
         <div className="text-center">
-          <p className="mb-4 text-sm text-gray-400">No innings in progress.</p>
-          <button
-            onClick={handleStartInnings}
-            className="rounded-sm bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-black"
-          >
-            Start Innings
-          </button>
+          <p className="mb-4 text-sm text-gray-400">Who is batting first?</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleStartInnings("us")}
+              className="rounded-sm bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-black"
+            >
+              Shaheen Sahita CC
+            </button>
+            <button
+              onClick={() => handleStartInnings("opponent")}
+              className="rounded-sm border border-[var(--border-strong)] px-6 py-2.5 text-sm text-white"
+            >
+              Opponent
+            </button>
+          </div>
           {message && <p className="mt-3 text-xs text-red-400">{message}</p>}
         </div>
       </main>
     );
   }
 
-  const strikerName = players.find((p) => p.id === striker)?.name ?? "Select";
-  const nonStrikerName = players.find((p) => p.id === nonStriker)?.name ?? "Select";
-  const bowlerName = players.find((p) => p.id === bowler)?.name ?? "Select";
+  const battingPlayers = innings.batting_team === "Shaheen Sahita CC" ? ownTeamPlayers : opponentTeamPlayers;
+  const bowlingPlayers = innings.batting_team === "Shaheen Sahita CC" ? opponentTeamPlayers : ownTeamPlayers;
+
+  const strikerName = battingPlayers.find((p) => p.id === striker)?.name ?? "Select";
+  const nonStrikerName = battingPlayers.find((p) => p.id === nonStriker)?.name ?? "Select";
+  const bowlerName = bowlingPlayers.find((p) => p.id === bowler)?.name ?? "Select";
 
   return (
     <main className="min-h-screen bg-black px-4 py-6">
@@ -331,15 +346,15 @@ export default function ScorePage() {
         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
           <select value={striker} onChange={(e) => setStriker(e.target.value)} className="rounded-sm border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-2 py-2 text-white">
             <option value="">Striker</option>
-            {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {battingPlayers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
           <select value={nonStriker} onChange={(e) => setNonStriker(e.target.value)} className="rounded-sm border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-2 py-2 text-white">
             <option value="">Non-Striker</option>
-            {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {battingPlayers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
           <select value={bowler} onChange={(e) => setBowler(e.target.value)} className="rounded-sm border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-2 py-2 text-white">
             <option value="">Bowler</option>
-            {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {bowlingPlayers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
 
