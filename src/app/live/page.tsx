@@ -118,8 +118,8 @@ export default async function LivePage() {
 
   // Determine current striker/bowler from most recent delivery
   const lastDelivery = deliveries[deliveries.length - 1];
-  const currentStrikerId = lastDelivery?.striker_id ?? null;
-  const currentBowlerId = lastDelivery?.bowler_id ?? null;
+  const currentStrikerId = lastDelivery?.striker_id ?? "opp";
+  const currentBowlerId = lastDelivery?.bowler_id ?? "opp";
 
   function oversDisplay(balls: number) {
     return `${Math.floor(balls / 6)}.${balls % 6}`;
@@ -214,7 +214,7 @@ export default async function LivePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentBowlerId && bowlingStats[currentBowlerId] && (
+                  {bowlingStats[currentBowlerId] && (
                     <tr className="text-white">
                       <td className="px-3 py-2">
                         {resolveName(currentBowlerId === "opp" ? null : currentBowlerId, lastDelivery?.bowler_name)}
