@@ -12,6 +12,8 @@ type Delivery = {
   is_legal_delivery: boolean;
   striker_id: string | null;
   bowler_id: string | null;
+  striker_name: string | null;
+  bowler_name: string | null;
   created_at: string;
 };
 
@@ -30,7 +32,7 @@ function buildCommentary(d: Delivery, strikerName: string, bowlerName: string) {
 export default async function LivePage() {
   const { data: liveMatch } = await supabase
     .from("matches")
-    .select("id, opponent, match_date, venue, overs, status")
+    .select("id, opponent, match_date, venue, overs, status, opponent_players")
     .eq("status", "live")
     .maybeSingle();
 
@@ -70,7 +72,7 @@ export default async function LivePage() {
   if (innings) {
     const { data } = await supabase
       .from("deliveries")
-      .select("over_number, ball_number, runs_off_bat, extra_type, extra_runs, is_wicket, is_legal_delivery, striker_id, bowler_id, created_at")
+      .select("over_number, ball_number, runs_off_bat, extra_type, extra_runs, is_wicket, is_legal_delivery, striker_id, bowler_id, striker_name, bowler_name, created_at")
       .eq("innings_id", innings.id)
       .order("created_at", { ascending: true });
     deliveries = data ?? [];
@@ -85,7 +87,11 @@ export default async function LivePage() {
     const { data: playerRows } = await supabase.from("players").select("id, name").in("id", playerIds);
     nameMap = Object.fromEntries((playerRows ?? []).map((p) => [p.id, p.name]));
   }
-  const resolveName = (id: string | null) => (id ? nameMap[id] ?? "Opponent Player" : "Opponent Player");
+  function resolveName(id: string | null, savedName?: string | null) {
+    if (savedName) return savedName;
+    if (id) return nameMap[id] ?? "Player";
+    return "Player";
+  }
 
   // Batting stats per striker
   const battingStats: Record<string, { runs: number; balls: number; fours: number; sixes: number }> = {};
@@ -182,7 +188,7 @@ export default async function LivePage() {
                     .map(([id, stats]) => (
                       <tr key={id} className="border-b border-[var(--border-subtle)] text-white">
                         <td className="px-3 py-2">
-                          {resolveName(id === "opp" ? null : id)}
+                          {resolveName(id === "opp" ? null : id, lastDelivery?.striker_id === id ? lastDelivery.striker_name : deliveries.find((d) => d.striker_id === id)?.striker_name)}
                           {id === currentStrikerId && <span className="text-[var(--accent)]"> *</span>}
                         </td>
                         <td className="px-2 py-2 text-right font-semibold">{stats.runs}</td>
@@ -211,7 +217,7 @@ export default async function LivePage() {
                   {currentBowlerId && bowlingStats[currentBowlerId] && (
                     <tr className="text-white">
                       <td className="px-3 py-2">
-                        {resolveName(currentBowlerId === "opp" ? null : currentBowlerId)}
+                        {resolveName(currentBowlerId === "opp" ? null : currentBowlerId, lastDelivery?.bowler_name)}
                       </td>
                       <td className="px-2 py-2 text-right font-semibold">
                         {oversDisplay(bowlingStats[currentBowlerId].legalBalls)}
@@ -263,7 +269,7 @@ export default async function LivePage() {
                             {d.over_number}.{d.ball_number}
                           </p>
                           <p className={d.is_wicket ? "font-medium text-red-400" : d.runs_off_bat >= 4 ? "font-medium text-[var(--accent-light)]" : "text-gray-300"}>
-                            {buildCommentary(d, resolveName(d.striker_id), resolveName(d.bowler_id))}
+                            {buildCommentary(d, resolveName(d.striker_id, d.striker_name), resolveName(d.bowler_id, d.bowler_name))}
                           </p>
                         </div>
                       ))}

@@ -228,6 +228,9 @@ export default function ScorePage() {
     const nextBall = options.isLegal ? currentBall + 1 : currentBall;
     const isOverComplete = options.isLegal && nextBall === 6;
 
+    const strikerPlayer = players.find((p) => p.id === striker);
+    const bowlerPlayer = players.find((p) => p.id === bowler);
+
     const { data: insertedDelivery, error } = await supabase
       .from("deliveries")
       .insert({
@@ -237,6 +240,8 @@ export default function ScorePage() {
         striker_id: striker.startsWith("opp-") ? null : striker,
         non_striker_id: nonStriker.startsWith("opp-") ? null : nonStriker,
         bowler_id: bowler.startsWith("opp-") ? null : bowler,
+        striker_name: strikerPlayer?.name ?? null,
+        bowler_name: bowlerPlayer?.name ?? null,
         runs_off_bat: options.runsOffBat ?? 0,
         extra_type: options.extraType ?? null,
         extra_runs: options.extraRuns ?? 0,
