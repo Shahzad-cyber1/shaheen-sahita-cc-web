@@ -31,6 +31,7 @@ export default function ScorePage() {
   const [target, setTarget] = useState<number | null>(null);
   const [firstInningsScore, setFirstInningsScore] = useState<number | null>(null);
   const [firstInningsBattingTeam, setFirstInningsBattingTeam] = useState<"us" | "opponent">("us");
+  const [determinedFirstBattingTeam, setDeterminedFirstBattingTeam] = useState<"us" | "opponent" | null>(null);
   const [innings, setInnings] = useState<Innings | null>(null);
 
   const [striker, setStriker] = useState("");
@@ -58,7 +59,7 @@ export default function ScorePage() {
   async function loadPlayers() {
     const { data: matchData } = await supabase
       .from("matches")
-      .select("playing_xi, opponent_players, opponent, overs")
+      .select("playing_xi, opponent_players, opponent, overs, toss_winner, toss_decision")
       .eq("id", matchId)
       .single();
 
@@ -68,6 +69,16 @@ export default function ScorePage() {
 
     if (matchData?.opponent) {
       setOpponentName(matchData.opponent);
+    }
+
+    if (matchData?.toss_winner && matchData?.toss_decision) {
+      const winnerIsUs = matchData.toss_winner === "Shaheen Sahita CC";
+      const battingFirst: "us" | "opponent" =
+        (winnerIsUs && matchData.toss_decision === "Bat") ||
+        (!winnerIsUs && matchData.toss_decision === "Bowl")
+          ? "us"
+          : "opponent";
+      setDeterminedFirstBattingTeam(battingFirst);
     }
 
     const ownPlayers: Player[] = [];
@@ -243,6 +254,16 @@ export default function ScorePage() {
       }
     }
 
+    const totalRunsSoFar = innings.total_runs + (options.runsOffBat ?? 0) + (options.extraRuns ?? 0);
+    if (innings.innings_number === 2 && target !== null && totalRunsSoFar >= target) {
+      inningsEnded = true;
+    }
+
+    const wicketsSoFar = innings.total_wickets + (options.isWicket ? 1 : 0);
+    if (wicketsSoFar >= 10) {
+      inningsEnded = true;
+    }
+
     const ballLabel = options.isWicket
       ? "W"
       : options.extraType
@@ -267,7 +288,30 @@ export default function ScorePage() {
       .eq("id", innings.id);
 
     if (inningsEnded) {
-      setMessage(`Innings complete: ${maxOvers} overs reached.`);
+      if (innings.innings_number === 1) {
+        setFirstInningsScore(newTotalRuns);
+        setTarget(newTotalRuns + 1);
+        setInningsNumber(2);
+        setMessage(`First innings complete: ${newTotalRuns}/${newWickets}.`);
+      } else {
+        const chasingTeam = innings.batting_team;
+        const defendingTeam = firstInningsBattingTeam === "us" ? "Shaheen Sahita CC" : (opponentName || "Opponent");
+
+        if (target !== null && newTotalRuns >= target) {
+          const wicketsLeft = 10 - newWickets;
+          setMessage(`${chasingTeam} won by ${wicketsLeft} wicket${wicketsLeft === 1 ? "" : "s"}!`);
+        } else if (newWickets >= 10) {
+          const runsShort = (target ?? 0) - newTotalRuns - 1;
+          setMessage(`${defendingTeam} won by ${runsShort} run${runsShort === 1 ? "" : "s"}!`);
+        } else {
+          const runsShort = (target ?? 0) - newTotalRuns - 1;
+          if (runsShort >= 0) {
+            setMessage(`${defendingTeam} won by ${runsShort} run${runsShort === 1 ? "" : "s"}!`);
+          } else {
+            setMessage(`${chasingTeam} won!`);
+          }
+        }
+      }
       setInnings(null);
       setSaving(false);
       return;
@@ -403,24 +447,35 @@ export default function ScorePage() {
       );
     }
 
+    if (!determinedFirstBattingTeam) {
+      return (
+        <main className="flex min-h-screen items-center justify-center bg-black px-6">
+          <div className="text-center">
+            <p className="text-sm text-gray-400">
+              Toss information is missing for this match.
+            </p>
+            <a href={`/admin/matches/${matchId}`} className="mt-4 inline-block rounded-sm bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-black">Go to Match Setup</a>
+          </div>
+        </main>
+      );
+    }
+
+    const battingTeamLabel =
+      determinedFirstBattingTeam === "us" ? "Shaheen Sahita CC" : (opponentName || "Opponent");
+
     return (
       <main className="flex min-h-screen items-center justify-center bg-black px-6">
         <div className="text-center">
-          <p className="mb-4 text-sm text-gray-400">Who is batting first?</p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => handleStartInnings("us")}
-              className="rounded-sm bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-black"
-            >
-              Shaheen Sahita CC
-            </button>
-            <button
-              onClick={() => handleStartInnings("opponent")}
-              className="rounded-sm border border-[var(--border-strong)] px-6 py-2.5 text-sm text-white"
-            >
-              {opponentName || "Opponent"}
-            </button>
-          </div>
+          <p className="text-sm text-gray-400">Based on the toss:</p>
+          <p className="mt-1 font-heading text-2xl text-white">
+            {battingTeamLabel} bats first
+          </p>
+          <button
+            onClick={() => handleStartInnings(determinedFirstBattingTeam)}
+            className="mt-6 rounded-sm bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-black"
+          >
+            Start Innings
+          </button>
           {message && <p className="mt-3 text-xs text-red-400">{message}</p>}
         </div>
       </main>
