@@ -341,10 +341,16 @@ export default function ScorePage() {
       inningsEnded = true;
     }
 
+    const extraLabelMap: Record<string, string> = {
+      wide: "WD",
+      "no-ball": "NB",
+      bye: "BYE",
+      "leg-bye": "LB",
+    };
     const ballLabel = options.isWicket
       ? "W"
       : options.extraType
-      ? options.extraType.toUpperCase()[0]
+      ? extraLabelMap[options.extraType] ?? options.extraType.toUpperCase()
       : String(options.runsOffBat ?? 0);
     setRecentBalls((prev) => [...prev.slice(-9), ballLabel]);
 
@@ -791,21 +797,27 @@ export default function ScorePage() {
           {recentBalls.map((b, i) => {
             const isWicket = b === "W";
             const isBoundary = b === "4" || b === "6";
-            const isExtra = ["W", "N", "B", "L"].includes(b) && !isWicket;
+            const isWide = b === "W" && false; // placeholder, real check below uses raw label
+            const label = b === "W" ? "W" : b;
+            const isWideLabel = b === "WD";
+            const isNoBallLabel = b === "NB";
+            const isByeLabel = b === "BYE" || b === "B";
+            const isLegByeLabel = b === "LB" || b === "L";
+
+            let classes = "bg-[var(--background-elevated)] text-gray-400";
+            if (isWicket) classes = "bg-red-600 text-white";
+            else if (isBoundary) classes = "bg-[var(--accent)] text-black";
+            else if (isWideLabel) classes = "border border-cyan-700 bg-cyan-950/60 text-cyan-300";
+            else if (isNoBallLabel) classes = "border border-orange-800 bg-orange-950/60 text-orange-300";
+            else if (isByeLabel) classes = "border border-purple-800 bg-purple-950/60 text-purple-300";
+            else if (isLegByeLabel) classes = "border border-teal-800 bg-teal-950/60 text-teal-300";
+
             return (
               <span
                 key={i}
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                  isWicket
-                    ? "bg-red-600 text-white"
-                    : isBoundary
-                    ? "bg-[var(--accent)] text-black"
-                    : isExtra
-                    ? "border border-[var(--border-strong)] bg-[var(--background-elevated)] text-gray-300"
-                    : "bg-[var(--background-elevated)] text-gray-400"
-                }`}
+                className={`flex h-8 min-w-8 items-center justify-center rounded-full px-1.5 text-[10px] font-bold transition-all ${classes}`}
               >
-                {b}
+                {label}
               </span>
             );
           })}
