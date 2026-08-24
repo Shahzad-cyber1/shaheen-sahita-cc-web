@@ -14,6 +14,7 @@ type Delivery = {
   bowler_id: string | null;
   non_striker_id: string | null;
   striker_name: string | null;
+  non_striker_name: string | null;
   bowler_name: string | null;
   created_at: string;
 };
@@ -73,7 +74,7 @@ export default async function LivePage() {
   if (innings) {
     const { data } = await supabase
       .from("deliveries")
-      .select("over_number, ball_number, runs_off_bat, extra_type, extra_runs, is_wicket, is_legal_delivery, striker_id, bowler_id, non_striker_id, striker_name, bowler_name, created_at")
+      .select("over_number, ball_number, runs_off_bat, extra_type, extra_runs, is_wicket, is_legal_delivery, striker_id, bowler_id, non_striker_id, striker_name, non_striker_name, bowler_name, created_at")
       .eq("innings_id", innings.id)
       .order("created_at", { ascending: true });
     deliveries = data ?? [];
@@ -186,8 +187,11 @@ export default async function LivePage() {
                 <tbody>
                   {[currentStrikerId, currentNonStrikerId].map((id) => {
                     const stats = battingStats[id] ?? { runs: 0, balls: 0, fours: 0, sixes: 0 };
-                    const nameFromDelivery =
-                      deliveries.slice().reverse().find((d) => d.striker_id === id || (id === "opp" && d.striker_name))?.striker_name;
+                    const nameFromDelivery = lastDelivery
+                      ? id === lastDelivery.striker_id || id === currentStrikerId
+                        ? lastDelivery.striker_name
+                        : lastDelivery.non_striker_name
+                      : null;
                     return (
                       <tr key={id} className="border-b border-[var(--border-subtle)] text-white">
                         <td className="px-3 py-2">
