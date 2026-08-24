@@ -413,6 +413,9 @@ export default function ScorePage() {
       return;
     }
 
+    const confirmed = window.confirm("Undo the last delivery? This cannot be reversed.");
+    if (!confirmed) return;
+
     const { data: deliveryToUndo } = await supabase
       .from("deliveries")
       .select("*")
@@ -468,6 +471,44 @@ export default function ScorePage() {
     setLastDeliveryId(null);
     setMessage("Last delivery undone.");
     setSaving(false);
+  }
+  
+  function handleExtraWithRuns(type: "wide" | "no-ball" | "bye" | "leg-bye") {
+    const labels: Record<string, string> = {
+      wide: "Wide",
+      "no-ball": "No Ball",
+      bye: "Bye",
+      "leg-bye": "Leg Bye",
+    };
+
+    const input = window.prompt(
+      `${labels[type]}: how many runs were run (in addition to the 1 for the ${labels[type].toLowerCase()})? Enter 0 if none.`,
+      "0"
+    );
+
+    if (input === null) return;
+
+    const extraRunsTaken = parseInt(input, 10);
+    if (isNaN(extraRunsTaken) || extraRunsTaken < 0) {
+      window.alert("Invalid number.");
+      return;
+    }
+
+    // Wide and No Ball are illegal deliveries; base 1 run always counts.
+    // Bye and Leg Bye are legal deliveries; runs taken ARE the extra (no base 1 unless 0 run).
+    if (type === "wide" || type === "no-ball") {
+      recordDelivery({
+        extraType: type,
+        extraRuns: 1 + extraRunsTaken,
+        isLegal: false,
+      });
+    } else {
+      recordDelivery({
+        extraType: type,
+        extraRuns: extraRunsTaken === 0 ? 1 : extraRunsTaken,
+        isLegal: true,
+      });
+    }
   }
   async function handleWicket() {
     if (innings && innings.total_wickets >= 10) {
@@ -665,28 +706,28 @@ export default function ScorePage() {
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             disabled={saving}
-            onClick={() => recordDelivery({ extraType: "wide", extraRuns: 1, isLegal: false })}
+            onClick={() => handleExtraWithRuns("wide")}
             className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
           >
             WIDE
           </button>
           <button
             disabled={saving}
-            onClick={() => recordDelivery({ extraType: "no-ball", extraRuns: 1, isLegal: false })}
+            onClick={() => handleExtraWithRuns("no-ball")}
             className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
           >
             NO BALL
           </button>
           <button
             disabled={saving}
-            onClick={() => recordDelivery({ extraType: "bye", extraRuns: 1, isLegal: true })}
+            onClick={() => handleExtraWithRuns("bye")}
             className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
           >
             BYE
           </button>
           <button
             disabled={saving}
-            onClick={() => recordDelivery({ extraType: "leg-bye", extraRuns: 1, isLegal: true })}
+            onClick={() => handleExtraWithRuns("leg-bye")}
             className="rounded-sm border border-[var(--border-strong)] py-3 text-sm text-white disabled:opacity-50"
           >
             LEG BYE
