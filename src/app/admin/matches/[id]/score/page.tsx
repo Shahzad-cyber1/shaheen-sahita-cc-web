@@ -591,6 +591,29 @@ export default function ScorePage() {
       return;
     }
 
+    const dismissalTypes = [
+      "Bowled",
+      "Caught",
+      "LBW",
+      "Run Out",
+      "Stumped",
+      "Hit Wicket",
+      "Retired Hurt",
+    ];
+    const dismissalChoice = window.prompt(
+      `How did the batter get out? Enter a number:\n${dismissalTypes.map((t, i) => `${i + 1}. ${t}`).join("\n")}`
+    );
+
+    if (!dismissalChoice) return;
+
+    const dismissalIndex = parseInt(dismissalChoice, 10) - 1;
+    const wicketType = dismissalTypes[dismissalIndex];
+
+    if (!wicketType) {
+      setMessage("Invalid dismissal type.");
+      return;
+    }
+
     const battingTeamPlayers = innings?.batting_team === "Shaheen Sahita CC" ? ownTeamPlayers : opponentTeamPlayers;
     const availableBatters = battingTeamPlayers.filter(
       (p) => p.id !== striker && p.id !== nonStriker
@@ -616,7 +639,7 @@ export default function ScorePage() {
       return;
     }
 
-    await recordDelivery({ isWicket: true, wicketType: "bowled", isLegal: true });
+    await recordDelivery({ isWicket: true, wicketType: wicketType.toLowerCase().replace(" ", "-"), isLegal: true });
 
     setStriker(newBatter.id);
   }
