@@ -130,7 +130,7 @@ export default function ScorePage() {
 
       const { data: lastDeliveries } = await supabase
         .from("deliveries")
-        .select("over_number, ball_number, striker_id, non_striker_id, bowler_id, striker_name, non_striker_name, bowler_name")
+        .select("over_number, ball_number, striker_id, non_striker_id, bowler_id, striker_name, non_striker_name, bowler_name, is_wicket")
         .eq("innings_id", inProgress.id)
         .order("created_at", { ascending: false })
         .limit(1);
@@ -160,9 +160,15 @@ export default function ScorePage() {
 
         const overJustCompleted = lastLegal && lastLegal.length > 0 && lastLegal[0].ball_number >= 6;
 
+        if (last.is_wicket) {
+          setMessage(
+            "A wicket fell on the last recorded ball. Please select the new batter using the Striker dropdown before continuing."
+          );
+        }
+
         setPendingRestore({
-          strikerId: last.striker_id,
-          strikerName: last.striker_name,
+          strikerId: last.is_wicket ? null : last.striker_id,
+          strikerName: last.is_wicket ? null : last.striker_name,
           nonStrikerId: last.non_striker_id,
           nonStrikerName: last.non_striker_name,
           bowlerId: overJustCompleted ? null : last.bowler_id,
