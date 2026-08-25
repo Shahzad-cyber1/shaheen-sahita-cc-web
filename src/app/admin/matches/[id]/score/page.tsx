@@ -173,7 +173,7 @@ export default function ScorePage() {
       if (inProgress.innings_number === 2) {
         const { data: firstInnings } = await supabase
           .from("innings")
-          .select("total_runs")
+          .select("total_runs, batting_team")
           .eq("match_id", matchId)
           .eq("innings_number", 1)
           .maybeSingle();
@@ -181,6 +181,7 @@ export default function ScorePage() {
         if (firstInnings) {
           setFirstInningsScore(firstInnings.total_runs);
           setTarget(firstInnings.total_runs + 1);
+          setFirstInningsBattingTeam(firstInnings.batting_team === "Shaheen Sahita CC" ? "us" : "opponent");
         }
       }
       return;
@@ -198,6 +199,7 @@ export default function ScorePage() {
       setFirstInningsScore(completedFirst.total_runs);
       setTarget(completedFirst.total_runs + 1);
       setInningsNumber(2);
+      setFirstInningsBattingTeam(completedFirst.batting_team === "Shaheen Sahita CC" ? "us" : "opponent");
     }
 
     setInnings(null);
