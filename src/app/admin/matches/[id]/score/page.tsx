@@ -93,7 +93,7 @@ export default function ScorePage() {
     const opponentPlayers: Player[] = (matchData?.opponent_players ?? []).map(
       (name: string, index: number) => ({
         id: `opp-${index}-${name}`,
-        name: `${name} (Opp)`,
+        name: name,
       })
     );
 
