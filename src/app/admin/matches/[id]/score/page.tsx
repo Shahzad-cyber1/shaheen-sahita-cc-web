@@ -236,8 +236,23 @@ export default function ScorePage() {
   }, [pendingRestore, players]);
 
   async function handleStartInnings(battingTeam: "us" | "opponent") {
+    let resolvedBattingTeam = battingTeam;
+
     if (inningsNumber === 1) {
       setFirstInningsBattingTeam(battingTeam);
+    } else {
+      // Always re-derive from the actual first innings record in the database
+      const { data: firstInningsRecord } = await supabase
+        .from("innings")
+        .select("batting_team")
+        .eq("match_id", matchId)
+        .eq("innings_number", 1)
+        .maybeSingle();
+
+      if (firstInningsRecord) {
+        const firstTeamWasUs = firstInningsRecord.batting_team === "Shaheen Sahita CC";
+        resolvedBattingTeam = firstTeamWasUs ? "opponent" : "us";
+      }
     }
 
     const { data, error } = await supabase
@@ -245,7 +260,7 @@ export default function ScorePage() {
       .insert({
         match_id: matchId,
         innings_number: inningsNumber,
-        batting_team: battingTeam === "us" ? "Shaheen Sahita CC" : (opponentName || "Opponent"),
+        batting_team: resolvedBattingTeam === "us" ? "Shaheen Sahita CC" : (opponentName || "Opponent"),
       })
       .select()
       .single();

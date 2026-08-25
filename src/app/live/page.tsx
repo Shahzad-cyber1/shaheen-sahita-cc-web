@@ -126,22 +126,32 @@ export default async function LivePage() {
   const currentBowlerId = lastDelivery?.bowler_id ?? `opp-${lastDelivery?.bowler_name ?? "unknown"}`;
 
   if (lastDelivery) {
-    // Determine how many legal balls have been bowled in this last over (to detect if over just ended)
-    const deliveriesInLastOver = deliveries.filter((d) => d.over_number === lastDelivery.over_number && d.is_legal_delivery);
-    const overJustCompleted = deliveriesInLastOver.length === 6 && lastDelivery.is_legal_delivery;
+    if (lastDelivery.is_wicket) {
+      // After a wicket, the new batter (recorded on the NEXT delivery) becomes striker.
+      // Since we don't have a "next" delivery yet, keep the non-out batter as non-striker
+      // and leave striker slot to be filled once the new batter's first ball is recorded.
+      // For display purposes, show the surviving batter as non-striker and mark striker as pending.
+      currentStrikerId = "pending-new-batter";
+      currentNonStrikerId = lastDelivery.striker_id === currentNonStrikerId
+        ? currentNonStrikerId
+        : (lastDelivery.non_striker_id ?? `opp-${lastDelivery.non_striker_name ?? "unknown2"}`);
+    } else {
+      const deliveriesInLastOver = deliveries.filter((d) => d.over_number === lastDelivery.over_number && d.is_legal_delivery);
+      const overJustCompleted = deliveriesInLastOver.length === 6 && lastDelivery.is_legal_delivery;
 
-    const oddRuns = lastDelivery.runs_off_bat % 2 === 1 && lastDelivery.extra_type !== "wide";
+      const oddRuns = lastDelivery.runs_off_bat % 2 === 1 && lastDelivery.extra_type !== "wide";
 
-    if (oddRuns) {
-      const temp = currentStrikerId;
-      currentStrikerId = currentNonStrikerId;
-      currentNonStrikerId = temp;
-    }
+      if (oddRuns) {
+        const temp = currentStrikerId;
+        currentStrikerId = currentNonStrikerId;
+        currentNonStrikerId = temp;
+      }
 
-    if (overJustCompleted) {
-      const temp = currentStrikerId;
-      currentStrikerId = currentNonStrikerId;
-      currentNonStrikerId = temp;
+      if (overJustCompleted) {
+        const temp = currentStrikerId;
+        currentStrikerId = currentNonStrikerId;
+        currentNonStrikerId = temp;
+      }
     }
   }
 
