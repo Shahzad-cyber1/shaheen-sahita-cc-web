@@ -101,7 +101,7 @@ export default async function LivePage() {
   const bowlingStats: Record<string, { legalBalls: number; runs: number; wickets: number }> = {};
 
   for (const d of deliveries) {
-    const sId = d.striker_id ?? "opp";
+    const sId = d.striker_id ?? `opp-${d.striker_name}`;
     if (!battingStats[sId]) battingStats[sId] = { runs: 0, balls: 0, fours: 0, sixes: 0 };
     const countsAsBall = d.is_legal_delivery;
     if (d.extra_type !== "wide") {
@@ -111,7 +111,7 @@ export default async function LivePage() {
       if (d.runs_off_bat === 6) battingStats[sId].sixes += 1;
     }
 
-    const bId = d.bowler_id ?? "opp";
+    const bId = d.bowler_id ?? `opp-${d.bowler_name}`;
     if (!bowlingStats[bId]) bowlingStats[bId] = { legalBalls: 0, runs: 0, wickets: 0 };
     if (d.is_legal_delivery) bowlingStats[bId].legalBalls += 1;
     bowlingStats[bId].runs += d.runs_off_bat + d.extra_runs;
@@ -120,9 +120,9 @@ export default async function LivePage() {
 
   // Determine current striker/bowler from most recent delivery
   const lastDelivery = deliveries[deliveries.length - 1];
-  const currentStrikerId = lastDelivery?.striker_id ?? "opp";
-  const currentNonStrikerId = lastDelivery?.non_striker_id ?? "opp2";
-  const currentBowlerId = lastDelivery?.bowler_id ?? "opp";
+  const currentStrikerId = lastDelivery?.striker_id ?? `opp-${lastDelivery?.striker_name ?? "unknown"}`;
+  const currentNonStrikerId = lastDelivery?.non_striker_id ?? `opp-${lastDelivery?.non_striker_name ?? "unknown2"}`;
+  const currentBowlerId = lastDelivery?.bowler_id ?? `opp-${lastDelivery?.bowler_name ?? "unknown"}`;
 
   function oversDisplay(balls: number) {
     return `${Math.floor(balls / 6)}.${balls % 6}`;
@@ -188,14 +188,14 @@ export default async function LivePage() {
                   {[currentStrikerId, currentNonStrikerId].map((id) => {
                     const stats = battingStats[id] ?? { runs: 0, balls: 0, fours: 0, sixes: 0 };
                     const nameFromDelivery = lastDelivery
-                      ? id === lastDelivery.striker_id || id === currentStrikerId
+                      ? id === currentStrikerId
                         ? lastDelivery.striker_name
                         : lastDelivery.non_striker_name
                       : null;
                     return (
                       <tr key={id} className="border-b border-[var(--border-subtle)] text-white">
                         <td className="px-3 py-2">
-                          {resolveName(id.startsWith("opp") ? null : id, nameFromDelivery)}
+                          {resolveName(id.startsWith("opp-") ? null : id, nameFromDelivery)}
                           {id === currentStrikerId && <span className="text-[var(--accent)]"> *</span>}
                         </td>
                         <td className="px-2 py-2 text-right font-semibold">{stats.runs}</td>
@@ -225,7 +225,7 @@ export default async function LivePage() {
                   {currentBowlerId && bowlingStats[currentBowlerId] && (
                     <tr className="text-white">
                       <td className="px-3 py-2">
-                        {resolveName(currentBowlerId === "opp" ? null : currentBowlerId, lastDelivery?.bowler_name)}
+                       {resolveName(currentBowlerId.startsWith("opp-") ? null : currentBowlerId, lastDelivery?.bowler_name)}
                       </td>
                       <td className="px-2 py-2 text-right font-semibold">
                         {oversDisplay(bowlingStats[currentBowlerId].legalBalls)}
