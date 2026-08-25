@@ -800,7 +800,7 @@ export default function ScorePage() {
         </div>
 
         <p className="mt-2 text-center text-xs text-gray-500">
-          {strikerName}* &amp; {nonStrikerName} &middot; {bowlerName} bowling
+          🏏 {strikerName} &amp; {nonStrikerName} &middot; {bowlerName} bowling
         </p>
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5">

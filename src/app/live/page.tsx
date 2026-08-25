@@ -120,9 +120,30 @@ export default async function LivePage() {
 
   // Determine current striker/bowler from most recent delivery
   const lastDelivery = deliveries[deliveries.length - 1];
-  const currentStrikerId = lastDelivery?.striker_id ?? `opp-${lastDelivery?.striker_name ?? "unknown"}`;
-  const currentNonStrikerId = lastDelivery?.non_striker_id ?? `opp-${lastDelivery?.non_striker_name ?? "unknown2"}`;
+
+  let currentStrikerId = lastDelivery?.striker_id ?? `opp-${lastDelivery?.striker_name ?? "unknown"}`;
+  let currentNonStrikerId = lastDelivery?.non_striker_id ?? `opp-${lastDelivery?.non_striker_name ?? "unknown2"}`;
   const currentBowlerId = lastDelivery?.bowler_id ?? `opp-${lastDelivery?.bowler_name ?? "unknown"}`;
+
+  if (lastDelivery) {
+    // Determine how many legal balls have been bowled in this last over (to detect if over just ended)
+    const deliveriesInLastOver = deliveries.filter((d) => d.over_number === lastDelivery.over_number && d.is_legal_delivery);
+    const overJustCompleted = deliveriesInLastOver.length === 6 && lastDelivery.is_legal_delivery;
+
+    const oddRuns = lastDelivery.runs_off_bat % 2 === 1 && lastDelivery.extra_type !== "wide";
+
+    if (oddRuns) {
+      const temp = currentStrikerId;
+      currentStrikerId = currentNonStrikerId;
+      currentNonStrikerId = temp;
+    }
+
+    if (overJustCompleted) {
+      const temp = currentStrikerId;
+      currentStrikerId = currentNonStrikerId;
+      currentNonStrikerId = temp;
+    }
+  }
 
   function oversDisplay(balls: number) {
     return `${Math.floor(balls / 6)}.${balls % 6}`;
@@ -196,7 +217,7 @@ export default async function LivePage() {
                       <tr key={id} className="border-b border-[var(--border-subtle)] text-white">
                         <td className="px-3 py-2">
                           {resolveName(id.startsWith("opp-") ? null : id, nameFromDelivery)}
-                          {id === currentStrikerId && <span className="text-[var(--accent)]"> *</span>}
+                          {id === currentStrikerId && <span className="ml-1">🏏</span>}
                         </td>
                         <td className="px-2 py-2 text-right font-semibold">{stats.runs}</td>
                         <td className="px-2 py-2 text-right text-gray-400">{stats.balls}</td>
