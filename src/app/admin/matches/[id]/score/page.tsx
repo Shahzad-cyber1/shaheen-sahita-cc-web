@@ -271,6 +271,8 @@ export default function ScorePage() {
     extraRuns?: number;
     isWicket?: boolean;
     wicketType?: string;
+    fielderId?: string | null;
+    fielderName?: string | null;
     isLegal: boolean;
   }) {
     if (!innings || !striker || !nonStriker || !bowler) {
@@ -305,6 +307,8 @@ export default function ScorePage() {
         extra_runs: options.extraRuns ?? 0,
         is_wicket: options.isWicket ?? false,
         wicket_type: options.wicketType ?? null,
+        fielder_id: options.fielderId ?? null,
+        fielder_name: options.fielderName ?? null,
         is_legal_delivery: options.isLegal,
       })
       .select()
@@ -614,6 +618,27 @@ export default function ScorePage() {
       return;
     }
 
+    let fielderId: string | null = null;
+    let fielderName: string | null = null;
+
+    const needsFielder = ["Caught", "Run Out", "Stumped"].includes(wicketType);
+    if (needsFielder) {
+      const bowlingTeamPlayers = innings?.batting_team === "Shaheen Sahita CC" ? opponentTeamPlayers : ownTeamPlayers;
+      const fielderNames = bowlingTeamPlayers.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
+      const fielderChoice = window.prompt(
+        `Who was the fielder (${wicketType})? Enter a number:\n${fielderNames}`
+      );
+
+      if (fielderChoice) {
+        const fielderIndex = parseInt(fielderChoice, 10) - 1;
+        const fielder = bowlingTeamPlayers[fielderIndex];
+        if (fielder) {
+          fielderId = fielder.id.startsWith("opp-") ? null : fielder.id;
+          fielderName = fielder.name;
+        }
+      }
+    }
+
     const battingTeamPlayers = innings?.batting_team === "Shaheen Sahita CC" ? ownTeamPlayers : opponentTeamPlayers;
     const availableBatters = battingTeamPlayers.filter(
       (p) => p.id !== striker && p.id !== nonStriker
@@ -639,7 +664,13 @@ export default function ScorePage() {
       return;
     }
 
-    await recordDelivery({ isWicket: true, wicketType: wicketType.toLowerCase().replace(" ", "-"), isLegal: true });
+    await recordDelivery({
+      isWicket: true,
+      wicketType: wicketType.toLowerCase().replace(" ", "-"),
+      isLegal: true,
+      fielderId,
+      fielderName,
+    });
 
     setStriker(newBatter.id);
   }
