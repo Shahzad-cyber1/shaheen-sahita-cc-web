@@ -148,17 +148,25 @@ export default function ScorePage() {
           .limit(1);
 
         if (lastLegal && lastLegal.length > 0) {
-          setCurrentOver(lastLegal[0].over_number);
-          setCurrentBall(lastLegal[0].ball_number);
+          if (lastLegal[0].ball_number >= 6) {
+            setCurrentOver(lastLegal[0].over_number + 1);
+            setCurrentBall(0);
+            setBowlerLockedForOver(false);
+          } else {
+            setCurrentOver(lastLegal[0].over_number);
+            setCurrentBall(lastLegal[0].ball_number);
+          }
         }
+
+        const overJustCompleted = lastLegal && lastLegal.length > 0 && lastLegal[0].ball_number >= 6;
 
         setPendingRestore({
           strikerId: last.striker_id,
           strikerName: last.striker_name,
           nonStrikerId: last.non_striker_id,
           nonStrikerName: last.non_striker_name,
-          bowlerId: last.bowler_id,
-          bowlerName: last.bowler_name,
+          bowlerId: overJustCompleted ? null : last.bowler_id,
+          bowlerName: overJustCompleted ? null : last.bowler_name,
         });
       }
 
