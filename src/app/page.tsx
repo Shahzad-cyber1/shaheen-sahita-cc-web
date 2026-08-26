@@ -288,8 +288,8 @@ export default async function Home() {
               key={match.id}
               className="glass-panel flex flex-col items-center justify-between gap-3 rounded-sm p-5 sm:flex-row"
             >
-              <div>
-                <p className="font-heading text-base text-white">
+              <a href={`/matches/${match.id}`} className="block">
+                <p className="font-heading text-base text-white hover:text-[var(--accent)] transition-colors">
                   vs {match.opponent}
                 </p>
                 <p className="mt-1 text-xs text-gray-400">
@@ -300,7 +300,7 @@ export default async function Home() {
                   })}
                   {match.venue ? ` \u00B7 ${match.venue}` : ""}
                 </p>
-              </div>
+              </a>
               <span
                 className={`rounded-sm px-3 py-1 text-[10px] font-medium uppercase tracking-wide ${
                   match.status === "live"
