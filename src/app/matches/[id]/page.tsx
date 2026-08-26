@@ -74,11 +74,13 @@ function oversDisplay(balls: number) {
   return `${Math.floor(balls / 6)}.${balls % 6}`;
 }
 
-export default async function MatchScorecardPage({ params }: { params: { id: string } }) {
+export default async function MatchScorecardPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
   const { data: match } = await supabase
     .from("matches")
     .select("id, opponent, match_date, venue, overs, status, result, toss_winner, toss_decision")
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle();
 
   if (!match) {
