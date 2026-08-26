@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { redirect } from "next/navigation";
 
 export const revalidate = 0;
 
@@ -86,6 +87,10 @@ export default async function MatchScorecardPage({ params }: { params: { id: str
         <p className="text-sm text-gray-500">Match not found.</p>
       </main>
     );
+  }
+
+  if (match.status === "live") {
+    redirect("/live");
   }
 
   const { data: inningsList } = await supabase
