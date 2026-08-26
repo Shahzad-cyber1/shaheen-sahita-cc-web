@@ -60,14 +60,19 @@ export default async function LivePage() {
     .maybeSingle();
 
   let target: number | null = null;
+  let firstInningsSummary: { batting_team: string; total_runs: number; total_wickets: number; total_overs: number } | null = null;
+
   if (innings?.innings_number === 2) {
     const { data: firstInnings } = await supabase
       .from("innings")
-      .select("total_runs")
+      .select("batting_team, total_runs, total_wickets, total_overs")
       .eq("match_id", liveMatch.id)
       .eq("innings_number", 1)
       .maybeSingle();
-    if (firstInnings) target = firstInnings.total_runs + 1;
+    if (firstInnings) {
+      target = firstInnings.total_runs + 1;
+      firstInningsSummary = firstInnings;
+    }
   }
 
   let deliveries: Delivery[] = [];
@@ -188,7 +193,12 @@ export default async function LivePage() {
 
         {innings ? (
           <>
-            <div className="relative mt-6 overflow-hidden rounded-xl border border-[var(--border-strong)] bg-gradient-to-b from-[var(--background-elevated)] to-black p-6 text-center">
+            {firstInningsSummary && (
+              <div className="mt-6 rounded-lg border border-[var(--border-subtle)] bg-[var(--background-elevated)] px-4 py-2 text-center text-xs text-gray-400">
+                {firstInningsSummary.batting_team}: {firstInningsSummary.total_runs}/{firstInningsSummary.total_wickets} ({firstInningsSummary.total_overs} ov)
+              </div>
+            )}
+            <div className="relative mt-3 overflow-hidden rounded-xl border border-[var(--border-strong)] bg-gradient-to-b from-[var(--background-elevated)] to-black p-6 text-center">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(212,175,55,0.12),transparent_70%)]" />
               <p className="relative text-xs tracking-widest text-gray-500">{innings.batting_team.toUpperCase()}</p>
               <p className="relative mt-1 font-heading text-5xl font-bold text-gold-gradient">
