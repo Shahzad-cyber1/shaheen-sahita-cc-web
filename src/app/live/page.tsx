@@ -85,7 +85,6 @@ export default async function LivePage() {
     deliveries = data ?? [];
   }
 
-  // Resolve player names (own squad only; opponents are text-only so we skip lookup for them)
   const playerIds = Array.from(
     new Set(deliveries.flatMap((d) => [d.striker_id, d.bowler_id].filter(Boolean) as string[]))
   );
@@ -100,18 +99,18 @@ export default async function LivePage() {
     return "Player";
   }
 
-  // Batting stats per striker
-  const battingStats: Record<string, { runs: number; balls: number; fours: number; sixes: number }> = {};
-  // Bowling stats per bowler
+  // Batting stats keyed by player, each entry stores its own name
+  const battingStats: Record<string, { name: string; runs: number; balls: number; fours: number; sixes: number }> = {};
+  // Bowling stats keyed by player
   const bowlingStats: Record<string, { legalBalls: number; runs: number; wickets: number }> = {};
 
   for (const d of deliveries) {
     const sId = d.striker_id ?? `opp-${d.striker_name}`;
-    if (!battingStats[sId]) battingStats[sId] = { runs: 0, balls: 0, fours: 0, sixes: 0 };
-    const countsAsBall = d.is_legal_delivery;
+    const sName = d.striker_name ?? "Player";
+    if (!battingStats[sId]) battingStats[sId] = { name: sName, runs: 0, balls: 0, fours: 0, sixes: 0 };
     if (d.extra_type !== "wide") {
       battingStats[sId].runs += d.runs_off_bat;
-      if (countsAsBall) battingStats[sId].balls += 1;
+      if (d.is_legal_delivery) battingStats[sId].balls += 1;
       if (d.runs_off_bat === 4) battingStats[sId].fours += 1;
       if (d.runs_off_bat === 6) battingStats[sId].sixes += 1;
     }
@@ -123,48 +122,55 @@ export default async function LivePage() {
     if (d.is_wicket) bowlingStats[bId].wickets += 1;
   }
 
-  // Determine current striker/bowler from most recent delivery
-  const lastDelivery = deliveries[deliveries.length - 1];
+  // Simulate the innings ball-by-ball to correctly track who is CURRENTLY batting/bowling
+  let simStrikerId: string | null = null;
+  let simNonStrikerId: string | null = null;
+  let simBowlerId: string | null = null;
+  let ballsInCurrentOver = 0;
+  let awaitingNewBatter = false;
 
-  let currentStrikerId = lastDelivery?.striker_id ?? `opp-${lastDelivery?.striker_name ?? "unknown"}`;
-  let currentNonStrikerId = lastDelivery?.non_striker_id ?? `opp-${lastDelivery?.non_striker_name ?? "unknown2"}`;
-  const currentBowlerId = lastDelivery?.bowler_id ?? `opp-${lastDelivery?.bowler_name ?? "unknown"}`;
+  for (const d of deliveries) {
+    const sId = d.striker_id ?? `opp-${d.striker_name}`;
+    const nsId = d.non_striker_id ?? `opp-${d.non_striker_name}`;
+    const bId = d.bowler_id ?? `opp-${d.bowler_name}`;
 
-  if (lastDelivery) {
-    if (lastDelivery.is_wicket) {
-      // After a wicket, the new batter (recorded on the NEXT delivery) becomes striker.
-      // Since we don't have a "next" delivery yet, keep the non-out batter as non-striker
-      // and leave striker slot to be filled once the new batter's first ball is recorded.
-      // For display purposes, show the surviving batter as non-striker and mark striker as pending.
-      currentStrikerId = "pending-new-batter";
-      currentNonStrikerId = lastDelivery.striker_id === currentNonStrikerId
-        ? currentNonStrikerId
-        : (lastDelivery.non_striker_id ?? `opp-${lastDelivery.non_striker_name ?? "unknown2"}`);
-    } else {
-      const deliveriesInLastOver = deliveries.filter((d) => d.over_number === lastDelivery.over_number && d.is_legal_delivery);
-      const overJustCompleted = deliveriesInLastOver.length === 6 && lastDelivery.is_legal_delivery;
+    if (simStrikerId === null) {
+      simStrikerId = sId;
+      simNonStrikerId = nsId;
+    } else if (awaitingNewBatter) {
+      simStrikerId = sId;
+      awaitingNewBatter = false;
+    }
+    simBowlerId = bId;
 
-      const oddRuns = lastDelivery.runs_off_bat % 2 === 1 && lastDelivery.extra_type !== "wide";
+    if (d.is_legal_delivery) ballsInCurrentOver += 1;
 
-      if (oddRuns) {
-        const temp = currentStrikerId;
-        currentStrikerId = currentNonStrikerId;
-        currentNonStrikerId = temp;
-      }
+    if (d.runs_off_bat % 2 === 1 && d.extra_type !== "wide") {
+      const temp: string | null = simStrikerId;
+      simStrikerId = simNonStrikerId;
+      simNonStrikerId = temp;
+    }
 
-      if (overJustCompleted) {
-        const temp = currentStrikerId;
-        currentStrikerId = currentNonStrikerId;
-        currentNonStrikerId = temp;
-      }
+    if (d.is_wicket) {
+      awaitingNewBatter = true;
+    }
+
+    if (d.is_legal_delivery && ballsInCurrentOver === 6) {
+      const temp: string | null = simStrikerId;
+      simStrikerId = simNonStrikerId;
+      simNonStrikerId = temp;
+      ballsInCurrentOver = 0;
     }
   }
+
+  const currentStrikerId = awaitingNewBatter ? "pending-new-batter" : simStrikerId ?? "unknown";
+  const currentNonStrikerId = simNonStrikerId ?? "unknown2";
+  const currentBowlerId = simBowlerId ?? "unknown";
 
   function oversDisplay(balls: number) {
     return `${Math.floor(balls / 6)}.${balls % 6}`;
   }
 
-  // Group deliveries by over for the recent-overs commentary feed (last 2 overs)
   const overGroups: Record<number, Delivery[]> = {};
   for (const d of deliveries) {
     if (!overGroups[d.over_number]) overGroups[d.over_number] = [];
@@ -212,7 +218,6 @@ export default async function LivePage() {
               )}
             </div>
 
-            {/* Batter / Bowler table */}
             <div className="mt-4 overflow-hidden rounded-lg border border-[var(--border-subtle)]">
               <table className="w-full text-xs">
                 <thead>
@@ -227,17 +232,12 @@ export default async function LivePage() {
                 </thead>
                 <tbody>
                   {[currentStrikerId, currentNonStrikerId].map((id) => {
-                    const stats = battingStats[id] ?? { runs: 0, balls: 0, fours: 0, sixes: 0 };
-                    const nameFromDelivery = lastDelivery
-                      ? id === currentStrikerId
-                        ? lastDelivery.striker_name
-                        : lastDelivery.non_striker_name
-                      : null;
+                    const stats = battingStats[id] ?? { name: id === "pending-new-batter" ? "New batter" : "Player", runs: 0, balls: 0, fours: 0, sixes: 0 };
                     return (
                       <tr key={id} className="border-b border-[var(--border-subtle)] text-white">
                         <td className="px-3 py-2">
-                          {resolveName(id.startsWith("opp-") ? null : id, nameFromDelivery)}
-                          {id === currentStrikerId && <span className="ml-1">🏏</span>}
+                          {stats.name}
+                          {id === currentStrikerId && id !== "pending-new-batter" && <span className="ml-1">🏏</span>}
                         </td>
                         <td className="px-2 py-2 text-right font-semibold">{stats.runs}</td>
                         <td className="px-2 py-2 text-right text-gray-400">{stats.balls}</td>
@@ -263,10 +263,10 @@ export default async function LivePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentBowlerId && bowlingStats[currentBowlerId] && (
+                  {bowlingStats[currentBowlerId] && (
                     <tr className="text-white">
                       <td className="px-3 py-2">
-                       {resolveName(currentBowlerId.startsWith("opp-") ? null : currentBowlerId, lastDelivery?.bowler_name)}
+                        {deliveries.slice().reverse().find((d) => (d.bowler_id ?? `opp-${d.bowler_name}`) === currentBowlerId)?.bowler_name ?? "Player"}
                       </td>
                       <td className="px-2 py-2 text-right font-semibold">
                         {oversDisplay(bowlingStats[currentBowlerId].legalBalls)}
@@ -284,7 +284,6 @@ export default async function LivePage() {
               </table>
             </div>
 
-            {/* Ball by ball commentary */}
             <div className="mt-6 space-y-6">
               {overNumbers.map((overNum) => {
                 const overDeliveries = overGroups[overNum];

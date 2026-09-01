@@ -239,10 +239,7 @@ export default async function Home() {
 
         <div className="mx-auto mt-14 grid max-w-6xl grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
           {squad.map((player) => (
-            <div
-              key={player.id}
-              className="group relative glass-panel rounded-sm p-5 text-center transition-transform hover:-translate-y-1 hover:border-[var(--border-strong)]"
-            >
+            <a href={`/players/${player.id}`} key={player.id} className="group relative glass-panel block rounded-sm p-5 text-center transition-transform hover:-translate-y-1 hover:border-[var(--border-strong)]">
               {(player.is_captain || player.is_vice_captain) && (
                 <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--accent)] text-[10px] font-semibold text-[var(--accent)]">
                   {player.is_captain ? "C" : "VC"}
@@ -262,7 +259,7 @@ export default async function Home() {
                   {player.title}
                 </p>
               )}
-            </div>
+            </a>
           ))}
         </div>
       </section>
